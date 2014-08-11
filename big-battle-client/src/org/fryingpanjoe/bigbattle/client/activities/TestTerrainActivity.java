@@ -27,7 +27,7 @@ public class TestTerrainActivity implements Activity {
   }
 
   @Override
-  public boolean update(int frameTime) {
+  public boolean update(int deltaTime) {
     GL11.glClearColor(0.f, 0.f, 0.f, 0.f);
     GL11.glClearDepth(1.f);
     GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);

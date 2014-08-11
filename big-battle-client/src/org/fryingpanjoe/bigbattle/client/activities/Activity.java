@@ -2,7 +2,7 @@ package org.fryingpanjoe.bigbattle.client.activities;
 
 public interface Activity {
 
-  boolean update(final int frameTime);
+  boolean update(final int deltaTime);
 
   void key(final int key, final char character, final boolean down);
 

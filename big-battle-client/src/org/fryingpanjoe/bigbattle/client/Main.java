@@ -5,11 +5,11 @@ import java.io.IOException;
 import org.fryingpanjoe.bigbattle.client.activities.Activity;
 import org.fryingpanjoe.bigbattle.client.activities.TestTerrainActivity;
 import org.fryingpanjoe.bigbattle.client.config.ClientConfig;
+import org.fryingpanjoe.bigbattle.client.rendering.Defaults;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
-import org.lwjgl.opengl.GL11;
 
 public class Main {
 
@@ -23,29 +23,32 @@ public class Main {
       Display.setFullscreen(config.getDisplayFullscreen());
       Display.setVSyncEnabled(config.getDisplayVsync());
       Display.create();
+      Defaults.setupGLInvariants();
+      Defaults.setupViewportFromDisplay();
       final Activity activity = new TestTerrainActivity();
       long lastTime = Sys.getTime();
       long fpsTime = lastTime;
-      long frameCount = 0;
-      GL11.glShadeModel(GL11.GL_NICEST);
-      GL11.glDepthFunc(GL11.GL_LEQUAL);
-      GL11.glViewport(0, 0, Display.getWidth(), Display.getHeight());
+      long fpsFrameCount = 0;
       while (!Display.isCloseRequested()) {
         final long now = Sys.getTime();
-        final long frameTime = now - lastTime;
+
+        final long deltaTime = now - lastTime;
         lastTime = now;
-        if (!activity.update((int) frameTime)) {
+        if (!activity.update((int)deltaTime)) {
           break;
         }
+
         Display.update();
         if (config.getDisplayFps().isPresent()) {
           Display.sync(config.getDisplayFps().get());
         }
-        ++frameCount;
-        if ((now - fpsTime) > 500) {
-          final float fps = 1000.f * (float)frameCount / (float)(now - fpsTime);
+
+        ++fpsFrameCount;
+        final long deltaFpsTime = now - fpsTime;
+        if (deltaFpsTime > 500) {
+          final float fps = 1000.f * (float)fpsFrameCount / (float)deltaFpsTime;
           Display.setTitle(String.format("%s (%.2f FPS)", TITLE, fps));
-          frameCount = 0;
+          fpsFrameCount = 0;
           fpsTime = now;
         }
       }
