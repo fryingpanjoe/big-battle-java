@@ -1,4 +1,4 @@
-package org.fryingpanjoe.bigbattle.common.network;
+package org.fryingpanjoe.bigbattle.common.networking;
 
 import java.util.Arrays;
 

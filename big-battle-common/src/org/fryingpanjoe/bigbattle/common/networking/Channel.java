@@ -1,9 +1,11 @@
-package org.fryingpanjoe.bigbattle.common.network;
+package org.fryingpanjoe.bigbattle.common.networking;
 
+import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.DatagramChannel;
 
 import com.google.common.eventbus.EventBus;
 
@@ -17,43 +19,45 @@ public class Channel {
   private static final int WINDOW_SIZE = 32;
 
   private final EventBus eventBus;
-  private final DatagramSocket socket;
-  private final SocketAddress remoteAddress;
-  private final ByteBuffer sendBuffer;
+  private final DatagramChannel channel;
+  private final SocketAddress address;
   private final ByteBuffer recvBuffer;
   private int ackBits;
   private int localPacketId;
   private int remotePacketId;
 
   public Channel(final EventBus eventBus,
-                 final DatagramSocket socket,
-                 final SocketAddress remoteAddress) {
+                 final DatagramChannel channel,
+                 final SocketAddress address) {
     this.eventBus = eventBus;
-    this.socket = socket;
-    this.remoteAddress = remoteAddress;
-    this.sendBuffer = ByteBuffer.allocate(MAX_BUFFER_SIZE).order(ByteOrder.BIG_ENDIAN);
+    this.channel = channel;
+    this.address = address;
     this.recvBuffer = ByteBuffer.allocate(MAX_BUFFER_SIZE).order(ByteOrder.BIG_ENDIAN);
     this.ackBits = 0;
     this.localPacketId = 0;
     this.remotePacketId = -1;
   }
 
-  public void sendPacket(final byte[] data) {
-    final int serializedPacketSize = 2 + 4 + 2 + data.length;
+  public void sendPacket(final ByteBuffer data) throws IOException {
+    final int serializedPacketSize = 2 + 4 + 2 + data.remaining();
     if (serializedPacketSize > MAX_PACKET_SIZE) {
       throw new RuntimeException("Packet too big: " + serializedPacketSize);
     }
-    this.sendBuffer
+    final ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_SIZE)
+      .order(ByteOrder.BIG_ENDIAN)
       .putShort((short)serializedPacketSize)
       .putInt(this.localPacketId)
       .putInt(this.remotePacketId)
       .putInt(this.ackBits)
-      .putShort((short)data.length)
+      .putShort((short)data.remaining())
       .put(data);
+    if (this.channel.send(packet, this.address) == 0) {
+      throw new IOException("No bytes sent");
+    }
     ++this.localPacketId;
   }
 
-  public void onDataReceived(final byte[] data) {
+  public void onDataReceived(final ByteBuffer data) {
     this.recvBuffer.put(data);
     if (this.recvBuffer.position() > 2) {
       this.recvBuffer.mark();

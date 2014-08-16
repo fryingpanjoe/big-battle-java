@@ -3,7 +3,7 @@ package org.fryingpanjoe.bigbattle.client.rendering;
 import java.io.IOException;
 
 import org.apache.commons.io.FilenameUtils;
-import org.fryingpanjoe.bigbattle.client.io.Files;
+import org.fryingpanjoe.bigbattle.common.io.Files;
 import org.lwjgl.opengl.GL11;
 import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.opengl.TextureLoader;

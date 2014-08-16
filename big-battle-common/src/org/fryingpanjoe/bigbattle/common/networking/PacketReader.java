@@ -1,4 +1,4 @@
-package org.fryingpanjoe.bigbattle.common.network;
+package org.fryingpanjoe.bigbattle.common.networking;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

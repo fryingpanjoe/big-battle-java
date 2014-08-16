@@ -1,4 +1,4 @@
-package org.fryingpanjoe.bigbattle.common.network;
+package org.fryingpanjoe.bigbattle.common.networking;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -26,7 +26,8 @@ public class PacketWriter {
 
   public Packet getPacket() {
     this.buffer.flip();
-    return new Packet(this.packetId, this.buffer.array());
+    //return new Packet(this.packetId, this.buffer.array());
+    return null;
   }
 
   public PacketWriter writeBytes(final byte[] v) {

@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import org.fryingpanjoe.bigbattle.client.io.Files;
+import org.fryingpanjoe.bigbattle.common.io.Files;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL32;

@@ -1,4 +1,4 @@
-package org.fryingpanjoe.bigbattle.common.network;
+package org.fryingpanjoe.bigbattle.common.networking;
 
 import org.fryingpanjoe.bigbattle.common.events.Event;
 import org.fryingpanjoe.bigbattle.common.events.SynchronizedEvent;
