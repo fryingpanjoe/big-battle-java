@@ -1,7 +1,6 @@
 package org.fryingpanjoe.bigbattle.common.networking;
 
 import java.io.IOException;
-import java.net.DatagramSocket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
