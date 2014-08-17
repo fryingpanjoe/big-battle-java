@@ -66,11 +66,8 @@ public class Main {
           receivedData.flip();
           clientChannel.onDataReceived(receivedData);
         } else {
-
           break;
         }
-        receivedData.flip();
-        clientChannel.onDataReceived(receivedData);
       }
 
       final long timeUntilUpdate = serverFrameTimer.getTimeUntilUpdate();
