@@ -50,6 +50,7 @@ public class Channel {
       .putInt(this.ackBits)
       .putShort((short)data.remaining())
       .put(data);
+    packet.flip();
     if (this.channel.send(packet, this.address) == 0) {
       throw new IOException("No bytes sent");
     }
