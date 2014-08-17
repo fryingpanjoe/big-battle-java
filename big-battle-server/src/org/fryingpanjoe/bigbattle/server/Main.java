@@ -50,6 +50,7 @@ public class Main {
 
     final UpdateTimer serverFrameTimer = UpdateTimer.fromMaxFps(config.getMaxFps());
     while (true) {
+
       // receive data from clients
       while (true) {
         final ByteBuffer receivedData = ByteBuffer.allocate(512).order(ByteOrder.BIG_ENDIAN);
@@ -65,8 +66,11 @@ public class Main {
           receivedData.flip();
           clientChannel.onDataReceived(receivedData);
         } else {
+
           break;
         }
+        receivedData.flip();
+        clientChannel.onDataReceived(receivedData);
       }
 
       final long timeUntilUpdate = serverFrameTimer.getTimeUntilUpdate();
