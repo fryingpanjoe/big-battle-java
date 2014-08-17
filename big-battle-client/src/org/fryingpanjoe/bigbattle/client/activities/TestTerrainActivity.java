@@ -27,7 +27,7 @@ public class TestTerrainActivity implements Activity {
   }
 
   @Override
-  public boolean update(int deltaTime) {
+  public boolean update(final long deltaTime) {
     GL11.glClearColor(0.f, 0.f, 0.f, 0.f);
     GL11.glClearDepth(1.f);
     GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
@@ -51,18 +51,18 @@ public class TestTerrainActivity implements Activity {
   }
 
   @Override
-  public void key(int key, char character, boolean down) {
+  public void key(final int key, final char character, final boolean down) {
   }
 
   @Override
-  public void mouseButton(int button, boolean down) {
+  public void mouseButton(final int button, final boolean down) {
   }
 
   @Override
-  public void mouseWheel(int delta) {
+  public void mouseWheel(final int delta) {
   }
 
   @Override
-  public void mouseMove(int x, int y, int dx, int dy) {
+  public void mouseMove(final int x, final int y, final int dx, final int dy) {
   }
 }

@@ -1,4 +1,4 @@
-package org.fryingpanjoe.bigbattle.common.world;
+package org.fryingpanjoe.bigbattle.common.game;
 
 public class Simulation {
 

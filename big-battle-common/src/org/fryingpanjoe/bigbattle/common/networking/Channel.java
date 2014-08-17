@@ -37,6 +37,10 @@ public class Channel {
     this.remotePacketId = -1;
   }
 
+  public ByteBuffer createPacket() {
+    return ByteBuffer.allocate(MAX_PACKET_SIZE).order(ByteOrder.BIG_ENDIAN);
+  }
+
   public void sendPacket(final ByteBuffer data) throws IOException {
     final int serializedPacketSize = 2 + 4 + 2 + data.remaining();
     if (serializedPacketSize > MAX_PACKET_SIZE) {
@@ -50,6 +54,7 @@ public class Channel {
       .putInt(this.ackBits)
       .putShort((short)data.remaining())
       .put(data);
+    packet.flip();
     if (this.channel.send(packet, this.address) == 0) {
       throw new IOException("No bytes sent");
     }
@@ -63,13 +68,13 @@ public class Channel {
       final short packetSize = this.recvBuffer.getShort(0);
       if (this.recvBuffer.position() >= packetSize) {
         this.recvBuffer.flip();
-        this.recvBuffer.getShort();
+        /*final short packetSize = */this.recvBuffer.getShort();
         final int packetId = this.recvBuffer.getInt();
         final int ackPacketId = this.recvBuffer.getInt();
         final int ackBits = this.recvBuffer.getInt();
         final short packetDataSize = this.recvBuffer.getShort();
         final byte[] packetData = new byte[packetDataSize];
-        this.recvBuffer.get(packetData, 0, packetDataSize);
+        this.recvBuffer.get(packetData);
         this.recvBuffer.compact();
         onPacketReceived(packetId, ackPacketId, ackBits, packetData);
       } else {
@@ -78,23 +83,24 @@ public class Channel {
     }
   }
 
-  private void onPacketReceived(final int packetId,
-                                final int ackPacketId,
-                                final int ackBits,
-                                final byte[] packetData) {
-    if (packetId < this.remotePacketId) {
-      final int bit = this.remotePacketId - packetId - 1;
+  private void onPacketReceived(final int receivedPacketId,
+                                final int receivedAckPacketId,
+                                final int receivedAckBits,
+                                final byte[] receivedPacketData) {
+    if (receivedPacketId < this.remotePacketId) {
+      final int bit = this.remotePacketId - receivedPacketId - 1;
       if (bit >= WINDOW_SIZE) {
         // packet too old, ignore it
         return;
       } else {
         this.ackBits |= bit;
       }
-    } else if (packetId > this.remotePacketId) {
-      this.ackBits = shiftAckBits(this.ackBits, packetId - this.remotePacketId);
-      this.remotePacketId = packetId;
+    } else if (receivedPacketId > this.remotePacketId) {
+      this.ackBits = shiftAckBits(this.ackBits, receivedPacketId - this.remotePacketId);
+      this.remotePacketId = receivedPacketId;
     }
-    this.eventBus.post(new Packet(packetId, ackPacketId, ackBits, packetData));
+    this.eventBus.post(
+      new Packet(receivedPacketId, receivedAckPacketId, receivedAckBits, receivedPacketData));
   }
 
   private static int shiftAckBits(final int ack, final int shift) {

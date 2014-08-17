@@ -12,7 +12,7 @@ public class Files {
   private static final int CHUNK_SIZE = 1024;
 
   public static InputStream getFileAsStream(final String filename) throws IOException {
-    final Path path = Paths.get(filename);
+    final Path path = Paths.get("bin/" + filename);
     if (java.nio.file.Files.exists(path)) {
       return java.nio.file.Files.newInputStream(path);
     } else {

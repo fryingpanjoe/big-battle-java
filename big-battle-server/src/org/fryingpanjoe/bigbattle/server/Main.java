@@ -6,9 +6,8 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.DatagramChannel;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -28,15 +27,15 @@ public class Main {
   public static void main(final String[] argv) throws Exception {
     LOG.info("Starting big-battle-server");
     final ServerConfig config = new ServerConfig();
+
     final InetSocketAddress bindAddress = new InetSocketAddress(
       InetAddress.getByName(config.getBindAddress()), config.getBindPort());
-    final DatagramChannel serverChannel = DatagramChannel.open();
     LOG.info("Binding to " + bindAddress.getHostString() + ":" + bindAddress.getPort());
+
+    final DatagramChannel serverChannel = DatagramChannel.open();
     serverChannel.configureBlocking(false);
     serverChannel.setOption(StandardSocketOptions.SO_REUSEADDR, true);
     serverChannel.bind(bindAddress);
-    final Selector selector = Selector.open();
-    serverChannel.register(selector, SelectionKey.OP_READ);
     final EventBus eventBus = new EventBus("server-event-bus");
     eventBus.register(new Object() {
       @Subscribe
@@ -44,13 +43,16 @@ public class Main {
         LOG.info("recv pck: " + packet);
       }
     });
-    final FrameLimiter frameLimiter = new FrameLimiter(config.getMaxFps());
+
     final Map<SocketAddress, Channel> clientChannels = new HashMap<>();
-    LOG.info("Entering main loop");
+
     int frame = 0;
+
+    final UpdateTimer serverFrameTimer = UpdateTimer.fromMaxFps(config.getMaxFps());
     while (true) {
-      if (selector.selectNow() > 0) {
-        final ByteBuffer receivedData = ByteBuffer.allocate(512);
+      // receive data from clients
+      while (true) {
+        final ByteBuffer receivedData = ByteBuffer.allocate(512).order(ByteOrder.BIG_ENDIAN);
         final SocketAddress clientAddress = serverChannel.receive(receivedData);
         if (clientAddress != null) {
           final Channel clientChannel;
@@ -62,23 +64,24 @@ public class Main {
           }
           receivedData.flip();
           clientChannel.onDataReceived(receivedData);
-          //eventBus.post(new ClientConnectedEvent(clientId));
-          //clientChannel.sendPacket(data);
         } else {
-          LOG.warning("DatagramChannel.receive() returned null");
+          break;
         }
       }
 
-      final long timeUntilNextUpdate = frameLimiter.getTimeUntilNextUpdate();
-      if (timeUntilNextUpdate > 0) {
-        //Thread.sleep(timeUntilNextUpdate);
+      final long timeUntilUpdate = serverFrameTimer.getTimeUntilUpdate();
+      if (timeUntilUpdate > 0) {
+        //Thread.sleep(timeUntilUpdate);
         Thread.sleep(1);
         continue;
       }
 
-      final ByteBuffer deltaPacket = ByteBuffer.allocate(512);
+      // compute delta
+      final ByteBuffer deltaPacket = ByteBuffer.allocate(512).order(ByteOrder.BIG_ENDIAN);
       deltaPacket.putInt(frame);
       deltaPacket.flip();
+
+      // send data to clients
       final Iterator<Channel> clientChannelIterator = clientChannels.values().iterator();
       while (clientChannelIterator.hasNext()) {
         try {
