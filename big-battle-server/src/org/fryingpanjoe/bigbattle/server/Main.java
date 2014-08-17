@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
@@ -30,9 +31,10 @@ public class Main {
     final InetSocketAddress bindAddress = new InetSocketAddress(
       InetAddress.getByName(config.getBindAddress()), config.getBindPort());
     final DatagramChannel serverChannel = DatagramChannel.open();
-    LOG.info("Binding to " + bindAddress.getHostString());
-    serverChannel.bind(bindAddress);
+    LOG.info("Binding to " + bindAddress.getHostString() + ":" + bindAddress.getPort());
     serverChannel.configureBlocking(false);
+    serverChannel.setOption(StandardSocketOptions.SO_REUSEADDR, true);
+    serverChannel.bind(bindAddress);
     final Selector selector = Selector.open();
     serverChannel.register(selector, SelectionKey.OP_READ);
     final EventBus eventBus = new EventBus("server-event-bus");
