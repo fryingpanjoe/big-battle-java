@@ -6,9 +6,8 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.DatagramChannel;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -35,8 +34,6 @@ public class Main {
     serverChannel.configureBlocking(false);
     serverChannel.setOption(StandardSocketOptions.SO_REUSEADDR, true);
     serverChannel.bind(bindAddress);
-    final Selector selector = Selector.open();
-    serverChannel.register(selector, SelectionKey.OP_READ);
     final EventBus eventBus = new EventBus("server-event-bus");
     eventBus.register(new Object() {
       @Subscribe
@@ -49,24 +46,19 @@ public class Main {
     LOG.info("Entering main loop");
     int frame = 0;
     while (true) {
-      if (selector.selectNow() > 0) {
-        final ByteBuffer receivedData = ByteBuffer.allocate(512);
-        final SocketAddress clientAddress = serverChannel.receive(receivedData);
-        if (clientAddress != null) {
-          final Channel clientChannel;
-          if (clientChannels.containsKey(clientAddress)) {
-            clientChannel = clientChannels.get(clientAddress);
-          } else {
-            LOG.info("Client connected: " + ((InetSocketAddress) clientAddress).getHostString());
-            clientChannel = new Channel(eventBus, serverChannel, clientAddress);
-          }
-          receivedData.flip();
-          clientChannel.onDataReceived(receivedData);
-          //eventBus.post(new ClientConnectedEvent(clientId));
-          //clientChannel.sendPacket(data);
+      final ByteBuffer receivedData = ByteBuffer.allocate(512).order(ByteOrder.BIG_ENDIAN);
+      final SocketAddress clientAddress = serverChannel.receive(receivedData);
+      if (clientAddress != null) {
+        final Channel clientChannel;
+        if (clientChannels.containsKey(clientAddress)) {
+          clientChannel = clientChannels.get(clientAddress);
         } else {
-          LOG.warning("DatagramChannel.receive() returned null");
+          LOG.info("Client connected: " + ((InetSocketAddress) clientAddress).getHostString());
+          clientChannel = new Channel(eventBus, serverChannel, clientAddress);
+          clientChannels.put(clientAddress, clientChannel);
         }
+        receivedData.flip();
+        clientChannel.onDataReceived(receivedData);
       }
 
       final long timeUntilNextUpdate = frameLimiter.getTimeUntilNextUpdate();
@@ -76,8 +68,9 @@ public class Main {
         continue;
       }
 
-      final ByteBuffer deltaPacket = ByteBuffer.allocate(512);
-      deltaPacket.putInt(frame);
+      final ByteBuffer deltaPacket = ByteBuffer.allocate(512)
+        .order(ByteOrder.BIG_ENDIAN)
+        .putInt(frame++);
       deltaPacket.flip();
       final Iterator<Channel> clientChannelIterator = clientChannels.values().iterator();
       while (clientChannelIterator.hasNext()) {
