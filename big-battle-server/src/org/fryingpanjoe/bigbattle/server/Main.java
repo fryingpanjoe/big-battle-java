@@ -14,9 +14,11 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.fryingpanjoe.bigbattle.common.networking.Channel;
+import org.fryingpanjoe.bigbattle.common.networking.Packet;
 import org.fryingpanjoe.bigbattle.server.config.ServerConfig;
 
 import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 
 public class Main {
 
@@ -34,9 +36,16 @@ public class Main {
     final Selector selector = Selector.open();
     serverChannel.register(selector, SelectionKey.OP_READ);
     final EventBus eventBus = new EventBus("server-event-bus");
+    eventBus.register(new Object() {
+      @Subscribe
+      public void onPacket(final Packet packet) {
+        LOG.info("recv pck: " + packet);
+      }
+    });
     final FrameLimiter frameLimiter = new FrameLimiter(config.getMaxFps());
     final Map<SocketAddress, Channel> clientChannels = new HashMap<>();
     LOG.info("Entering main loop");
+    int frame = 0;
     while (true) {
       if (selector.selectNow() > 0) {
         final ByteBuffer receivedData = ByteBuffer.allocate(512);
@@ -47,8 +56,6 @@ public class Main {
             clientChannel = clientChannels.get(clientAddress);
           } else {
             LOG.info("Client connected: " + ((InetSocketAddress) clientAddress).getHostString());
-            System.out.println(
-              "Client connected: " + ((InetSocketAddress) clientAddress).getHostString());
             clientChannel = new Channel(eventBus, serverChannel, clientAddress);
           }
           receivedData.flip();
@@ -57,7 +64,6 @@ public class Main {
           //clientChannel.sendPacket(data);
         } else {
           LOG.warning("DatagramChannel.receive() returned null");
-          System.err.println("DatagramChannel.receive() returned null");
         }
       }
 
@@ -68,18 +74,15 @@ public class Main {
         continue;
       }
 
-      // update world
-      // ...
-      // compute delta
       final ByteBuffer deltaPacket = ByteBuffer.allocate(512);
-      // send updates to clients
+      deltaPacket.putInt(frame);
+      deltaPacket.flip();
       final Iterator<Channel> clientChannelIterator = clientChannels.values().iterator();
       while (clientChannelIterator.hasNext()) {
         try {
           clientChannelIterator.next().sendPacket(deltaPacket);
         } catch (final IOException e) {
           e.printStackTrace();
-          System.out.println("Client disconnected");
           LOG.info("Client disconnected");
           clientChannelIterator.remove();
         }
