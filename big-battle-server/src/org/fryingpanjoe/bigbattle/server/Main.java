@@ -78,7 +78,7 @@ public class Main {
       }
 
       // compute delta
-      final ByteBuffer deltaPacket = ByteBuffer.allocate(512).order(ByteOrder.BIG_ENDIAN);
+      final ByteBuffer deltaPacket = Channel.createPacket();
       deltaPacket.putInt(frame);
       deltaPacket.flip();
 

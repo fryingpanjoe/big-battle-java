@@ -60,9 +60,8 @@ public class Main {
       });
       final Channel channel = new Channel(eventBus, serverChannel, connectAddress);
 
-      final ByteBuffer firstPacket = ByteBuffer.allocate(512)
-        .order(ByteOrder.BIG_ENDIAN)
-        .putInt(0xdeadbeef);
+      final ByteBuffer firstPacket = Channel.createPacket();
+      firstPacket.putInt(0xdeadbeef);
       firstPacket.flip();
       channel.sendPacket(firstPacket);
 
