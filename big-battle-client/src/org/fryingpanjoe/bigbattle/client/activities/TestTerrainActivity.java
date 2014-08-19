@@ -5,7 +5,7 @@ import java.nio.FloatBuffer;
 import java.util.Random;
 
 import org.fryingpanjoe.bigbattle.client.rendering.IsometricCamera;
-import org.fryingpanjoe.bigbattle.client.rendering.TerrainRendering;
+import org.fryingpanjoe.bigbattle.client.rendering.TerrainRenderer;
 import org.fryingpanjoe.bigbattle.common.terrain.TerrainGenerator;
 import org.fryingpanjoe.bigbattle.common.terrain.TerrainPatch;
 import org.lwjgl.BufferUtils;
@@ -16,12 +16,12 @@ import com.google.common.collect.ImmutableList;
 public class TestTerrainActivity implements Activity {
 
   private final IsometricCamera camera;
-  private final TerrainRendering rendering;
+  private final TerrainRenderer rendering;
   private final TerrainPatch patch;
 
   public TestTerrainActivity() throws IOException {
     this.camera = new IsometricCamera();
-    this.rendering = new TerrainRendering();
+    this.rendering = new TerrainRenderer();
     this.patch = TerrainGenerator.generateRandomPatch(128, ImmutableList.of(0, 1), new Random());
     this.camera.setPos(64, 64);
   }

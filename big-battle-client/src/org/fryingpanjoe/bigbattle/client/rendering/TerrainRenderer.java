@@ -12,7 +12,7 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.util.vector.Vector2f;
 import org.newdawn.slick.opengl.Texture;
 
-public class TerrainRendering {
+public class TerrainRenderer {
 
   private static final float SQRT_TWO = (float) Math.sqrt(2.f);
   private static final float SQRT_TWO_OVER_TWO = SQRT_TWO * 0.5f;
@@ -20,9 +20,8 @@ public class TerrainRendering {
 
   private static final int ATLAS_TILE_SIZE = 8;
 
-  // approxmiate
-  private static final int TILES_PER_FRAME = 1024;
-  private static final int VERTS_PER_TILE = StaticGeometry.CUBE_VERT_XYZ.length / 3;
+  private static final int TILES_PER_FRAME = 1024; // approxmiate
+  private static final int VERTS_PER_TILE = StaticGeometries.CUBE_VERT_XYZ.length / 3;
   private static final int FLOATS_PER_VERT = 3 + 3 + 2; // xyz, norm, uv
   private static final int BYTES_PER_FLOAT = 4;
 
@@ -34,9 +33,9 @@ public class TerrainRendering {
   private final int vbo;
   private final int vboSize;
   private final FloatBuffer vboBuffer;
-  final float[] vboBufferArray;
+  private final float[] vboBufferArray;
 
-  public TerrainRendering() throws IOException {
+  public TerrainRenderer() throws IOException {
     this.atlas = Textures.getTexture("terrain_atlas.png");
     this.atlasTilesPerRow = this.atlas.getImageWidth() / ATLAS_TILE_SIZE;
     this.atlasTileSizeU = (float)ATLAS_TILE_SIZE / (float)this.atlas.getImageWidth();
@@ -81,18 +80,18 @@ public class TerrainRendering {
         final int tile = patch.getTiles()[x + y * patch.getSize()];
         final int vertCount = 6; //StaticGeometry.CUBE_VERT_XYZ.length / 3;
         for (int i = 0; i < vertCount; ++i) {
-          vertData[vertDataIndex++] = StaticGeometry.CUBE_VERT_XYZ[(i * 3) + 0] + (float) x;
-          vertData[vertDataIndex++] = StaticGeometry.CUBE_VERT_XYZ[(i * 3) + 1] - 0.5f;
-          vertData[vertDataIndex++] = StaticGeometry.CUBE_VERT_XYZ[(i * 3) + 2] + (float) y;
+          vertData[vertDataIndex++] = StaticGeometries.CUBE_VERT_XYZ[(i * 3) + 0] + (float) x;
+          vertData[vertDataIndex++] = StaticGeometries.CUBE_VERT_XYZ[(i * 3) + 1] - 0.5f;
+          vertData[vertDataIndex++] = StaticGeometries.CUBE_VERT_XYZ[(i * 3) + 2] + (float) y;
           vertData[vertDataIndex++] =
-            (StaticGeometry.CUBE_VERT_UV[(i * 2) + 0] + (tile % this.atlasTilesPerRow)) *
+            (StaticGeometries.CUBE_VERT_UV[(i * 2) + 0] + (tile % this.atlasTilesPerRow)) *
             this.atlasTileSizeU;
           vertData[vertDataIndex++] =
-            (StaticGeometry.CUBE_VERT_UV[(i * 2) + 1] + (tile / this.atlasTilesPerRow)) *
+            (StaticGeometries.CUBE_VERT_UV[(i * 2) + 1] + (tile / this.atlasTilesPerRow)) *
             this.atlasTileSizeV;
-          vertData[vertDataIndex++] = StaticGeometry.CUBE_VERT_NORM[(i * 3) + 0];
-          vertData[vertDataIndex++] = StaticGeometry.CUBE_VERT_NORM[(i * 3) + 1];
-          vertData[vertDataIndex++] = StaticGeometry.CUBE_VERT_NORM[(i * 3) + 2];
+          vertData[vertDataIndex++] = StaticGeometries.CUBE_VERT_NORM[(i * 3) + 0];
+          vertData[vertDataIndex++] = StaticGeometries.CUBE_VERT_NORM[(i * 3) + 1];
+          vertData[vertDataIndex++] = StaticGeometries.CUBE_VERT_NORM[(i * 3) + 2];
         }
       }
     }

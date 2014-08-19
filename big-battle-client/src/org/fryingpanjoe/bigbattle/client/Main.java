@@ -5,7 +5,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.channels.DatagramChannel;
 
 import org.fryingpanjoe.bigbattle.client.activities.Activity;
@@ -60,7 +59,7 @@ public class Main {
       });
       final Channel channel = new Channel(eventBus, serverChannel, connectAddress);
 
-      final ByteBuffer firstPacket = Channel.createPacket();
+      final ByteBuffer firstPacket = Channel.createPacketBuffer();
       firstPacket.putInt(0xdeadbeef);
       firstPacket.flip();
       channel.sendPacket(firstPacket);
@@ -76,7 +75,7 @@ public class Main {
         // send input to server
 
         // receive update from server
-        final ByteBuffer receivedData = ByteBuffer.allocate(512).order(ByteOrder.BIG_ENDIAN);
+        final ByteBuffer receivedData = Channel.createPacketBuffer();
         final SocketAddress serverAddress = serverChannel.receive(receivedData);
         if (serverAddress != null) {
           receivedData.flip();

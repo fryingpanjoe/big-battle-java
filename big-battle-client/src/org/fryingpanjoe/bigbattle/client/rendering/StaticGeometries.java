@@ -2,7 +2,7 @@ package org.fryingpanjoe.bigbattle.client.rendering;
 
 import org.lwjgl.util.vector.Vector3f;
 
-public class StaticGeometry {
+public class StaticGeometries {
 
   public static final float[] CUBE_VERT_XYZ = {
     // top

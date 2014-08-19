@@ -37,7 +37,7 @@ public class Channel {
     this.remotePacketId = -1;
   }
 
-  public static ByteBuffer createPacket() {
+  public static ByteBuffer createPacketBuffer() {
     return ByteBuffer.allocate(MAX_PACKET_SIZE).order(ByteOrder.BIG_ENDIAN);
   }
 
@@ -46,7 +46,7 @@ public class Channel {
     if (serializedPacketSize > MAX_PACKET_SIZE) {
       throw new RuntimeException("Packet too big: " + serializedPacketSize);
     }
-    final ByteBuffer packet = createPacket()
+    final ByteBuffer packet = createPacketBuffer()
       .putShort((short)serializedPacketSize)
       .putInt(this.localPacketId)
       .putInt(this.remotePacketId)

@@ -16,7 +16,7 @@ public class Files {
     if (java.nio.file.Files.exists(path)) {
       return java.nio.file.Files.newInputStream(path);
     } else {
-      return Files.class.getResourceAsStream(filename);
+      return Thread.currentThread().getContextClassLoader().getResourceAsStream(filename);
     }
   }
 
