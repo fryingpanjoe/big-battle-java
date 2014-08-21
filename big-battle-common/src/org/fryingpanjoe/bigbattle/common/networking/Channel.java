@@ -6,32 +6,25 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.DatagramChannel;
 
-import com.google.common.eventbus.EventBus;
+import org.newdawn.slick.util.Log;
 
 public class Channel {
 
   private static final int MAX_PACKET_SIZE = 512;
-  private static final int MAX_BACKLOG = 5;
-  private static final int MAX_BUFFER_SIZE = MAX_BACKLOG * MAX_PACKET_SIZE;
 
   // must be <= number of ack bits
   private static final int WINDOW_SIZE = 32;
 
-  private final EventBus eventBus;
   private final DatagramChannel channel;
   private final SocketAddress address;
-  private final ByteBuffer recvBuffer;
   private int ackBits;
   private int localPacketId;
   private int remotePacketId;
 
-  public Channel(final EventBus eventBus,
-                 final DatagramChannel channel,
+  public Channel(final DatagramChannel channel,
                  final SocketAddress address) {
-    this.eventBus = eventBus;
     this.channel = channel;
     this.address = address;
-    this.recvBuffer = ByteBuffer.allocate(MAX_BUFFER_SIZE).order(ByteOrder.BIG_ENDIAN);
     this.ackBits = 0;
     this.localPacketId = 0;
     this.remotePacketId = -1;
@@ -60,37 +53,35 @@ public class Channel {
     ++this.localPacketId;
   }
 
-  public void onDataReceived(final ByteBuffer data) {
-    this.recvBuffer.put(data);
-    if (this.recvBuffer.position() > 2) {
-      this.recvBuffer.mark();
-      final short packetSize = this.recvBuffer.getShort(0);
-      if (this.recvBuffer.position() >= packetSize) {
-        this.recvBuffer.flip();
-        /*final short packetSize = */this.recvBuffer.getShort();
-        final int packetId = this.recvBuffer.getInt();
-        final int ackPacketId = this.recvBuffer.getInt();
-        final int ackBits = this.recvBuffer.getInt();
-        final short packetDataSize = this.recvBuffer.getShort();
+  public Packet onDataReceived(final ByteBuffer data) {
+    if (data.limit() > 2) {
+      final short packetSize = data.getShort(0);
+      if (data.limit() >= packetSize) {
+        final int packetId = data.getInt();
+        final int ackPacketId = data.getInt();
+        final int ackBits = data.getInt();
+        final short packetDataSize = data.getShort();
         final byte[] packetData = new byte[packetDataSize];
-        this.recvBuffer.get(packetData);
-        this.recvBuffer.compact();
-        onPacketReceived(packetId, ackPacketId, ackBits, packetData);
+        data.get(packetData);
+        return onPacketReceived(packetId, ackPacketId, ackBits, packetData);
       } else {
-        this.recvBuffer.reset();
+        Log.warn(String.format("Bad packet received: size %d < %d", data.limit(), packetSize));
       }
+    } else {
+      Log.warn("Bad packet received: missing header");
     }
+    return null;
   }
 
-  private void onPacketReceived(final int receivedPacketId,
-                                final int receivedAckPacketId,
-                                final int receivedAckBits,
-                                final byte[] receivedPacketData) {
+  private Packet onPacketReceived(final int receivedPacketId,
+                                  final int receivedAckPacketId,
+                                  final int receivedAckBits,
+                                  final byte[] receivedPacketData) {
     if (receivedPacketId < this.remotePacketId) {
       final int bit = this.remotePacketId - receivedPacketId - 1;
       if (bit >= WINDOW_SIZE) {
         // packet too old, ignore it
-        return;
+        return null;
       } else {
         this.ackBits |= bit;
       }
@@ -98,8 +89,7 @@ public class Channel {
       this.ackBits = shiftAckBits(this.ackBits, receivedPacketId - this.remotePacketId);
       this.remotePacketId = receivedPacketId;
     }
-    this.eventBus.post(
-      new Packet(receivedPacketId, receivedAckPacketId, receivedAckBits, receivedPacketData));
+    return new Packet(receivedPacketId, receivedAckPacketId, receivedAckBits, receivedPacketData);
   }
 
   private static int shiftAckBits(final int ack, final int shift) {

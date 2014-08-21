@@ -57,7 +57,7 @@ public class Main {
           LOG.info("recv pck: " + packet);
         }
       });
-      final Channel channel = new Channel(eventBus, serverChannel, connectAddress);
+      final Channel channel = new Channel(serverChannel, connectAddress);
 
       final ByteBuffer firstPacket = Channel.createPacketBuffer();
       firstPacket.putInt(0xdeadbeef);
