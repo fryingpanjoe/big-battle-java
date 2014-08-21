@@ -38,7 +38,7 @@ public class ClientTerrainManager {
   }
 
   public TerrainPatch getTerrainPatch(final float x, final float y) {
-    final TerrainPatchLocation location = worldToPatchLocation(x, y);
+    final TerrainPatchLocation location = getTerrainPatchLocationAt(x, y);
     for (TerrainPatchWithLocation patch : this.patches) {
       if (patch.location.equals(location)) {
         return patch.patch;
@@ -55,7 +55,7 @@ public class ClientTerrainManager {
     }
   }
 
-  private static TerrainPatchLocation worldToPatchLocation(final float x, final float y) {
+  private static TerrainPatchLocation getTerrainPatchLocationAt(final float x, final float y) {
     return new TerrainPatchLocation(
       (int) (x / TILE_WORLD_SIZE) / PATCH_SIZE,
       (int) (y / TILE_WORLD_SIZE) / PATCH_SIZE);

@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
+import java.util.logging.Logger;
 
 import org.fryingpanjoe.bigbattle.client.activities.Activity;
 import org.fryingpanjoe.bigbattle.client.activities.TestTerrainActivity;
@@ -20,11 +21,10 @@ import org.lwjgl.opengl.DisplayMode;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import com.sun.istack.internal.logging.Logger;
 
 public class Main {
 
-  private static final Logger LOG = Logger.getLogger(Main.class);
+  private static final Logger LOG = Logger.getLogger(Main.class.getName());
 
   private static final String TITLE = "Big Battle Client";
 
