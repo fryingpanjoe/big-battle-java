@@ -3,12 +3,13 @@ package org.fryingpanjoe.bigbattle.client;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.logging.Logger;
 
 import org.fryingpanjoe.bigbattle.common.networking.Channel;
+import org.fryingpanjoe.bigbattle.common.networking.Packet;
+import org.fryingpanjoe.bigbattle.common.networking.Protocol;
 
 import com.google.common.eventbus.EventBus;
 
@@ -17,55 +18,62 @@ public class ClientNetworkManager {
   private static final Logger LOG = Logger.getLogger(ClientNetworkManager.class.getName());
 
   private final EventBus eventBus;
-  private DatagramChannel serverSocket;
-  private InetSocketAddress serverAddress;
-  private Channel channel;
+  private ClientChannel channel;
 
   public ClientNetworkManager(final EventBus eventBus) {
     this.eventBus = eventBus;
-  }
-
-  public void update() {
-    try {
-      final ByteBuffer receivedData = Channel.createPacketBuffer();
-      final SocketAddress serverAddress = this.serverSocket.receive(receivedData);
-      if (serverAddress != null) {
-        receivedData.flip();
-        this.channel.onDataReceived(receivedData);
-      }
-    } catch (final IOException e) {
-      //
-    }
+    this.channel = null;
   }
 
   public void connect(final String host, final int port) throws IOException {
     disconnect();
-
     LOG.info(String.format("Connecting to %s:%d", host, port));
-
-    this.serverAddress = new InetSocketAddress(InetAddress.getByName(host), port);
-    this.serverSocket = DatagramChannel.open();
-    this.serverSocket.configureBlocking(false);
-    this.serverSocket.connect(this.serverAddress);
-    this.channel = new Channel(this.serverSocket, this.serverAddress);
-
-    // send hello
+    final InetSocketAddress address = new InetSocketAddress(InetAddress.getByName(host), port);
+    final DatagramChannel socket = DatagramChannel.open();
+    socket.configureBlocking(false);
+    socket.connect(address);
+    this.channel = new ClientChannel(new Channel(socket, address), socket, address);
+    // TODO send hello
   }
 
   public void disconnect() {
-    LOG.info("Disconnecting");
+    if (this.channel != null) {
+      LOG.info("Disconnecting");
+      // TODO send goodbye
+      this.channel.close();
+      this.channel = null;
+    }
+  }
 
-    // send goodbye
-
-    this.serverAddress = null;
-    if (this.serverSocket != null && this.serverSocket.isOpen()) {
+  public void receivePacketFromServer() {
+    if (this.channel != null) {
       try {
-        this.serverSocket.close();
+        final Packet packet = this.channel.receivePacket();
+        if (packet != null) {
+          onPacketReceivedFromServer(packet);
+        }
       } catch (final IOException e) {
-        //
+        LOG.warning("Failed to receive packet from server: " + e.getMessage());
+        disconnect();
       }
     }
-    this.serverSocket = null;
-    this.channel = null;
+  }
+
+  public void sendPacketToServer(final ByteBuffer packet) {
+    if (this.channel != null) {
+      try {
+        this.channel.sendPacket(packet);
+      } catch (final IOException e) {
+        LOG.warning("Failed to send packet to server: " + e.getMessage());
+        disconnect();
+      }
+    }
+  }
+
+  private void onPacketReceivedFromServer(final Packet packet) {
+    final ByteBuffer data = ByteBuffer.wrap(packet.getData());
+    final Protocol.PacketType packetType = Protocol.readPacketHeader(data);
+    // TODO parse packet based on type
+    // TODO post stuff to eventBus
   }
 }

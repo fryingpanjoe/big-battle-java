@@ -1,16 +1,24 @@
 package org.fryingpanjoe.bigbattle.client.activities;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
 import org.fryingpanjoe.bigbattle.client.ClientEntityManager;
+import org.fryingpanjoe.bigbattle.client.ClientNetworkManager;
 import org.fryingpanjoe.bigbattle.client.ClientPlayerManager;
 import org.fryingpanjoe.bigbattle.client.ClientTerrainManager;
+import org.fryingpanjoe.bigbattle.client.Keybinding;
+import org.fryingpanjoe.bigbattle.client.UpdateRateTimer;
 import org.fryingpanjoe.bigbattle.client.game.ClientPlayer;
 import org.fryingpanjoe.bigbattle.client.rendering.EntityRenderer;
 import org.fryingpanjoe.bigbattle.client.rendering.IsometricCamera;
 import org.fryingpanjoe.bigbattle.client.rendering.TerrainRenderer;
 import org.fryingpanjoe.bigbattle.common.events.EnterGameEvent;
+import org.fryingpanjoe.bigbattle.common.events.NoticePlayerEvent;
+import org.fryingpanjoe.bigbattle.common.game.PlayerInput;
+import org.fryingpanjoe.bigbattle.common.networking.Channel;
+import org.fryingpanjoe.bigbattle.common.networking.Protocol;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
@@ -18,29 +26,42 @@ import com.google.common.eventbus.Subscribe;
 
 public class MultiplayerActivity implements Activity {
 
+  private final ClientNetworkManager networkManager;
   private final ClientEntityManager entityManager;
   private final ClientPlayerManager playerManager;
   private final ClientTerrainManager terrainManager;
   private final TerrainRenderer terrainRenderer;
   private final EntityRenderer entityRenderer;
+  private final Keybinding keybinding;
+
   private final IsometricCamera camera;
+  private final PlayerInput playerInput;
+  private final UpdateRateTimer inputRate;
 
   private int clientPlayerId;
   private ClientPlayer clientPlayer;
 
-  public MultiplayerActivity(final ClientEntityManager entityManager,
+  public MultiplayerActivity(final ClientNetworkManager networkManager,
+                             final ClientEntityManager entityManager,
                              final ClientPlayerManager playerManager,
                              final ClientTerrainManager terrainManager,
                              final TerrainRenderer terrainRenderer,
                              final EntityRenderer entityRenderer,
-                             final IsometricCamera camera) throws IOException {
+                             final Keybinding keybinding) throws IOException {
+    this.networkManager = networkManager;
     this.entityManager = entityManager;
     this.playerManager = playerManager;
     this.terrainManager = terrainManager;
     this.terrainRenderer = terrainRenderer;
     this.entityRenderer = entityRenderer;
-    this.camera = camera;
+    this.keybinding = keybinding;
+    // internal state
+    this.camera = new IsometricCamera();
+    this.playerInput = new PlayerInput();
+    this.inputRate = UpdateRateTimer.fromFps(30.f);
+    // mutable state
     this.clientPlayerId = -1;
+    this.clientPlayer = null;
   }
 
   @Subscribe
@@ -51,8 +72,32 @@ public class MultiplayerActivity implements Activity {
     }
   }
 
+  @Subscribe
+  public void onNoticePlayerEvent(final NoticePlayerEvent event) {
+    if (this.clientPlayer == null && this.clientPlayerId != -1) {
+      this.clientPlayer = this.playerManager.getPlayers().get(this.clientPlayerId);
+    }
+  }
+
   @Override
-  public boolean update(final long deltaTime) {
+  public boolean update() {
+    this.networkManager.receivePacketFromServer();
+    if (this.inputRate.shouldUpdate()) {
+      final ByteBuffer packet = Channel.createPacketBuffer();
+      Protocol.writePacketHeader(packet, Protocol.PacketType.PlayerInput);
+      Protocol.writePlayerInput(packet, this.playerInput);
+      packet.flip();
+      this.networkManager.sendPacketToServer(packet);
+    }
+    return true;
+  }
+
+  @Override
+  public void draw() {
+    if (this.clientPlayer != null) {
+      this.camera.setPos(this.clientPlayer.getClientEntity().getEntity().getPos());
+    }
+
     GL11.glClearColor(0.f, 0.f, 0.f, 0.f);
     GL11.glClearDepth(1.f);
     GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
@@ -71,10 +116,6 @@ public class MultiplayerActivity implements Activity {
     positionBuffer.flip();
     GL11.glLight(GL11.GL_LIGHT0, GL11.GL_POSITION, positionBuffer);
 
-    if (this.clientPlayer == null && this.clientPlayerId != -1) {
-      this.clientPlayer = this.playerManager.getPlayers().get(this.clientPlayerId);
-    }
-
     if (this.clientPlayer != null) {
       this.terrainRenderer.renderTerrainPatch(
         this.camera,
@@ -85,12 +126,14 @@ public class MultiplayerActivity implements Activity {
 
     this.entityRenderer.renderEntities(
       this.camera, this.entityManager.getRenderEntities().values());
-
-    return true;
   }
 
   @Override
   public void key(final int key, final char character, final boolean down) {
+    final PlayerInput.Action action = this.keybinding.get(key);
+    if (action != null) {
+      this.playerInput.setAction(action, down);
+    }
   }
 
   @Override

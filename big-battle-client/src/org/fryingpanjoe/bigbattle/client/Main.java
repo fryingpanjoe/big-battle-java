@@ -1,26 +1,21 @@
 package org.fryingpanjoe.bigbattle.client;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.DatagramChannel;
 import java.util.logging.Logger;
 
 import org.fryingpanjoe.bigbattle.client.activities.Activity;
-import org.fryingpanjoe.bigbattle.client.activities.TestTerrainActivity;
+import org.fryingpanjoe.bigbattle.client.activities.MultiplayerActivity;
 import org.fryingpanjoe.bigbattle.client.config.ClientConfig;
 import org.fryingpanjoe.bigbattle.client.rendering.Defaults;
-import org.fryingpanjoe.bigbattle.common.networking.Channel;
-import org.fryingpanjoe.bigbattle.common.networking.Packet;
+import org.fryingpanjoe.bigbattle.client.rendering.EntityRenderer;
+import org.fryingpanjoe.bigbattle.client.rendering.TerrainRenderer;
+import org.fryingpanjoe.bigbattle.common.game.PlayerInput;
 import org.lwjgl.LWJGLException;
-import org.lwjgl.Sys;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 
 import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
 
 public class Main {
 
@@ -44,59 +39,42 @@ public class Main {
       Defaults.setupGLInvariants();
       Defaults.setupViewportFromDisplay();
 
-      final InetSocketAddress connectAddress = new InetSocketAddress(
-        InetAddress.getByName("192.168.1.176"), 12345);
-      LOG.info("Connecting to " + connectAddress.getHostString() + ":" + connectAddress.getPort());
-      final DatagramChannel serverChannel = DatagramChannel.open();
-      serverChannel.configureBlocking(false);
-      serverChannel.connect(connectAddress);
-      final EventBus eventBus = new EventBus("client-event-bus");
-      eventBus.register(new Object() {
-        @Subscribe
-        public void onPacket(final Packet packet) {
-          LOG.info("recv pck: " + packet);
-        }
-      });
-      final Channel channel = new Channel(serverChannel, connectAddress);
+      final EventBus eventBus = new EventBus();
+      final ClientNetworkManager clientNetworkManager = new ClientNetworkManager(eventBus);
+      final ClientEntityManager clientEntityManager = new ClientEntityManager();
+      eventBus.register(clientEntityManager);
+      final ClientPlayerManager clientPlayerManager = new ClientPlayerManager(clientEntityManager);
+      eventBus.register(clientPlayerManager);
+      final ClientTerrainManager clientTerrainManager = new ClientTerrainManager();
+      final TerrainRenderer terrainRenderer = new TerrainRenderer();
+      final EntityRenderer entityRenderer = new EntityRenderer();
+      final Keybinding keybinding = new Keybinding();
+      keybinding.bind(Keyboard.KEY_W, PlayerInput.Action.MovingForward);
+      keybinding.bind(Keyboard.KEY_S, PlayerInput.Action.MovingBackward);
+      keybinding.bind(Keyboard.KEY_A, PlayerInput.Action.MovingLeft);
+      keybinding.bind(Keyboard.KEY_D, PlayerInput.Action.MovingRight);
+      keybinding.bind(Keyboard.KEY_LSHIFT, PlayerInput.Action.Running);
+      keybinding.bind(Keybinding.MOUSE1, PlayerInput.Action.Attacking);
+      keybinding.bind(Keybinding.MOUSE2, PlayerInput.Action.UsingItem);
+      final Activity activity = new MultiplayerActivity(
+        clientNetworkManager,
+        clientEntityManager,
+        clientPlayerManager,
+        clientTerrainManager,
+        terrainRenderer,
+        entityRenderer,
+        keybinding);
+      eventBus.register(activity);
 
-      final ByteBuffer firstPacket = Channel.createPacketBuffer();
-      firstPacket.putInt(0xdeadbeef);
-      firstPacket.flip();
-      channel.sendPacket(firstPacket);
-
-      final Activity activity = new TestTerrainActivity();
-
-      long gameUpdatedAt = Sys.getTime();
+      clientNetworkManager.connect("192.168.1.76", 12345);
 
       final FpsCounter fpsCounter = new FpsCounter();
-      while (!Display.isCloseRequested()) {
-        final long now = Sys.getTime();
-
-        // send input to server
-
-        // receive update from server
-        final ByteBuffer receivedData = Channel.createPacketBuffer();
-        final SocketAddress serverAddress = serverChannel.receive(receivedData);
-        if (serverAddress != null) {
-          receivedData.flip();
-          channel.onDataReceived(receivedData);
-        }
-
-        // update game
-        final long deltaUpdateTime = now - gameUpdatedAt;
-        if (deltaUpdateTime > 0) {
-          gameUpdatedAt = now;
-          if (!activity.update(deltaUpdateTime)) {
-            break;
-          }
-        }
-
-        // update display
+      while (!Display.isCloseRequested() && activity.update()) {
+        activity.draw();
         Display.update();
         if (config.getDisplayFps().isPresent()) {
           Display.sync(config.getDisplayFps().get());
         }
-
         if (fpsCounter.update()) {
           Display.setTitle(String.format("%s (%d FPS)", TITLE, fpsCounter.getFps()));
         }

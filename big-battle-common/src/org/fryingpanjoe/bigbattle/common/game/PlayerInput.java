@@ -17,12 +17,16 @@ public class PlayerInput {
   private EnumSet<Action> actions;
   private float rotation;
 
+  public PlayerInput() {
+    this(EnumSet.noneOf(Action.class), 0.f);
+  }
+
   public PlayerInput(final EnumSet<Action> actions, final float rotation) {
     this.actions = actions;
     this.rotation = rotation;
   }
 
-  public void onAction(final Action action, final boolean on) {
+  public void setAction(final Action action, final boolean on) {
     if (on) {
       this.actions.add(action);
     } else {

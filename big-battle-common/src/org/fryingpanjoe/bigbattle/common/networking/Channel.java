@@ -15,15 +15,14 @@ public class Channel {
   // must be <= number of ack bits
   private static final int WINDOW_SIZE = 32;
 
-  private final DatagramChannel channel;
+  private final DatagramChannel socket;
   private final SocketAddress address;
   private int ackBits;
   private int localPacketId;
   private int remotePacketId;
 
-  public Channel(final DatagramChannel channel,
-                 final SocketAddress address) {
-    this.channel = channel;
+  public Channel(final DatagramChannel socket, final SocketAddress address) {
+    this.socket = socket;
     this.address = address;
     this.ackBits = 0;
     this.localPacketId = 0;
@@ -47,7 +46,7 @@ public class Channel {
       .putShort((short)data.remaining())
       .put(data);
     packet.flip();
-    if (this.channel.send(packet, this.address) == 0) {
+    if (this.socket.send(packet, this.address) == 0) {
       throw new IOException("No bytes sent");
     }
     ++this.localPacketId;
