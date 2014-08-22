@@ -59,14 +59,6 @@ public class TestTerrainActivity implements Activity {
   }
 
   @Override
-  public void mouseButton(final int button, final boolean down) {
-  }
-
-  @Override
-  public void mouseWheel(final int delta) {
-  }
-
-  @Override
   public void mouseMove(final int x, final int y, final int dx, final int dy) {
   }
 }

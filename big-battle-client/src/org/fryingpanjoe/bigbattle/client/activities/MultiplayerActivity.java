@@ -10,6 +10,7 @@ import org.fryingpanjoe.bigbattle.client.ClientPlayerManager;
 import org.fryingpanjoe.bigbattle.client.ClientTerrainManager;
 import org.fryingpanjoe.bigbattle.client.Keybinding;
 import org.fryingpanjoe.bigbattle.client.UpdateRateTimer;
+import org.fryingpanjoe.bigbattle.client.events.ConnectedToServerEvent;
 import org.fryingpanjoe.bigbattle.client.game.ClientPlayer;
 import org.fryingpanjoe.bigbattle.client.rendering.EntityRenderer;
 import org.fryingpanjoe.bigbattle.client.rendering.IsometricCamera;
@@ -22,10 +23,12 @@ import org.fryingpanjoe.bigbattle.common.networking.Protocol;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
+import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 public class MultiplayerActivity implements Activity {
 
+  private final EventBus eventBus;
   private final ClientNetworkManager networkManager;
   private final ClientEntityManager entityManager;
   private final ClientPlayerManager playerManager;
@@ -41,13 +44,15 @@ public class MultiplayerActivity implements Activity {
   private int clientPlayerId;
   private ClientPlayer clientPlayer;
 
-  public MultiplayerActivity(final ClientNetworkManager networkManager,
+  public MultiplayerActivity(final EventBus eventBus,
+                             final ClientNetworkManager networkManager,
                              final ClientEntityManager entityManager,
                              final ClientPlayerManager playerManager,
                              final ClientTerrainManager terrainManager,
                              final TerrainRenderer terrainRenderer,
                              final EntityRenderer entityRenderer,
                              final Keybinding keybinding) throws IOException {
+    this.eventBus = eventBus;
     this.networkManager = networkManager;
     this.entityManager = entityManager;
     this.playerManager = playerManager;
@@ -62,6 +67,11 @@ public class MultiplayerActivity implements Activity {
     // mutable state
     this.clientPlayerId = -1;
     this.clientPlayer = null;
+  }
+
+  @Subscribe
+  public void onConnectedToServerEvent(final ConnectedToServerEvent event) {
+    // send hello
   }
 
   @Subscribe
@@ -134,14 +144,6 @@ public class MultiplayerActivity implements Activity {
     if (action != null) {
       this.playerInput.setAction(action, down);
     }
-  }
-
-  @Override
-  public void mouseButton(final int button, final boolean down) {
-  }
-
-  @Override
-  public void mouseWheel(final int delta) {
   }
 
   @Override

@@ -26,63 +26,31 @@ public class Main {
 
   public static void main(final String[] argv) throws Exception {
     LOG.info("Starting big-battle-server");
+
     final ServerConfig config = new ServerConfig();
 
-    final InetSocketAddress bindAddress = new InetSocketAddress(
-      InetAddress.getByName(config.getBindAddress()), config.getBindPort());
-    LOG.info("Binding to " + bindAddress.getHostString() + ":" + bindAddress.getPort());
-
-    final DatagramChannel serverChannel = DatagramChannel.open();
-    serverChannel.configureBlocking(false);
-    serverChannel.setOption(StandardSocketOptions.SO_REUSEADDR, true);
-    serverChannel.bind(bindAddress);
-    final EventBus eventBus = new EventBus("server-event-bus");
-    eventBus.register(new Object() {
-      @Subscribe
-      public void onPacket(final Packet packet) {
-        LOG.info("recv pck: " + packet);
-      }
-    });
-
-    final Map<SocketAddress, Channel> clientChannels = new HashMap<>();
+    final EventBus eventBus = new EventBus();
+    final ServerNetworkManager serverNetworkManager = new ServerNetworkManager(eventBus);
+    serverNetworkManager.bind(config.getBindAddress(), config.getBindPort());
 
     int frame = 0;
 
     final UpdateTimer serverFrameTimer = UpdateTimer.fromMaxFps(config.getMaxFps());
     while (true) {
-
-      // receive data from clients
-      while (true) {
-        final ByteBuffer receivedData = ByteBuffer.allocate(512).order(ByteOrder.BIG_ENDIAN);
-        final SocketAddress clientAddress = serverChannel.receive(receivedData);
-        if (clientAddress != null) {
-          final Channel clientChannel;
-          if (clientChannels.containsKey(clientAddress)) {
-            clientChannel = clientChannels.get(clientAddress);
-          } else {
-            LOG.info("Client connected: " + ((InetSocketAddress) clientAddress).getHostString());
-            clientChannel = new Channel(eventBus, serverChannel, clientAddress);
-          }
-          receivedData.flip();
-          clientChannel.onDataReceived(receivedData);
-        } else {
-          break;
-        }
-      }
-
+      serverNetworkManager.checkTimeouts();
+      serverNetworkManager.receivePacketsFromClients();
       final long timeUntilUpdate = serverFrameTimer.getTimeUntilUpdate();
       if (timeUntilUpdate > 0) {
         //Thread.sleep(timeUntilUpdate);
         Thread.sleep(1);
         continue;
       }
-
       // compute delta
       final ByteBuffer deltaPacket = Channel.createPacketBuffer();
       deltaPacket.putInt(frame);
       deltaPacket.flip();
-
       // send data to clients
+      serverNetworkManager.sendPacketTo(clientId, packet);
       final Iterator<Channel> clientChannelIterator = clientChannels.values().iterator();
       while (clientChannelIterator.hasNext()) {
         try {

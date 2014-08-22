@@ -7,6 +7,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.logging.Logger;
 
+import org.fryingpanjoe.bigbattle.client.events.ConnectedToServerEvent;
+import org.fryingpanjoe.bigbattle.client.events.DisconnectedFromServerEvent;
 import org.fryingpanjoe.bigbattle.common.networking.Channel;
 import org.fryingpanjoe.bigbattle.common.networking.Packet;
 import org.fryingpanjoe.bigbattle.common.networking.Protocol;
@@ -27,19 +29,19 @@ public class ClientNetworkManager {
 
   public void connect(final String host, final int port) throws IOException {
     disconnect();
-    LOG.info(String.format("Connecting to %s:%d", host, port));
+    LOG.info(String.format("Connecting to server %s:%d", host, port));
     final InetSocketAddress address = new InetSocketAddress(InetAddress.getByName(host), port);
     final DatagramChannel socket = DatagramChannel.open();
     socket.configureBlocking(false);
     socket.connect(address);
     this.channel = new ClientChannel(new Channel(socket, address), socket, address);
-    // TODO send hello
+    this.eventBus.post(new ConnectedToServerEvent());
   }
 
   public void disconnect() {
     if (this.channel != null) {
-      LOG.info("Disconnecting");
-      // TODO send goodbye
+      LOG.info("Disconnecting from server");
+      this.eventBus.post(new DisconnectedFromServerEvent());
       this.channel.close();
       this.channel = null;
     }

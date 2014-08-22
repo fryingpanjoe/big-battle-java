@@ -12,6 +12,7 @@ import org.fryingpanjoe.bigbattle.client.rendering.TerrainRenderer;
 import org.fryingpanjoe.bigbattle.common.game.PlayerInput;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 
@@ -57,6 +58,7 @@ public class Main {
       keybinding.bind(Keybinding.MOUSE1, PlayerInput.Action.Attacking);
       keybinding.bind(Keybinding.MOUSE2, PlayerInput.Action.UsingItem);
       final Activity activity = new MultiplayerActivity(
+        eventBus,
         clientNetworkManager,
         clientEntityManager,
         clientPlayerManager,
@@ -68,8 +70,33 @@ public class Main {
 
       clientNetworkManager.connect("192.168.1.76", 12345);
 
+      int mouseWheel = 0;
+
       final FpsCounter fpsCounter = new FpsCounter();
-      while (!Display.isCloseRequested() && activity.update()) {
+      while (!Display.isCloseRequested()) {
+        for (int i = 0; i < Keyboard.getNumKeyboardEvents(); ++i) {
+          activity.key(
+            Keyboard.getEventKey(), Keyboard.getEventCharacter(), Keyboard.getEventKeyState());
+        }
+        while (Mouse.next()) {
+          if (Mouse.getEventButton() != -1) {
+            activity.key(
+              Keyboard.KEYBOARD_SIZE + Mouse.getEventButton(), '\0', Mouse.getEventButtonState());
+          }
+          if (Mouse.getEventDWheel() != mouseWheel) {
+            final int key = Mouse.getEventDWheel() < 0 ?
+              Keybinding.MOUSE_WHEELDOWN : Keybinding.MOUSE_WHEELUP;
+            if (Mouse.getEventDWheel() == 0) {
+              activity.key(key, '\0', true);
+            } else {
+              activity.key(key, '\0', false);
+            }
+            mouseWheel = Mouse.getEventDWheel();
+          }
+        }
+        if (!activity.update()) {
+          break;
+        }
         activity.draw();
         Display.update();
         if (config.getDisplayFps().isPresent()) {
