@@ -12,8 +12,10 @@ public class EntityDefinitions {
 
   public static final EntityDefinition PLAYER = new EntityDefinition(
     EntityDefinitionId.Player.ordinal(),
-    1.0f,
-    0.5f);
+    1.0f, // mass
+    0.5f, // radius
+    1.5f, // speed
+    1.f); // rotation speed
 
   private static final Map<EntityDefinitionId, EntityDefinition> ALL = ImmutableMap.of(
     EntityDefinitionId.Player, PLAYER);

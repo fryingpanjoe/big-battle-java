@@ -20,9 +20,7 @@ public class Protocol {
 
   private static final byte ENTITY_POS_BIT      = 0b00000001;
   private static final byte ENTITY_VEL_BIT      = 0b00000010;
-  private static final byte ENTITY_ACC_BIT      = 0b00000100;
-  private static final byte ENTITY_FORCE_BIT    = 0b00001000;
-  private static final byte ENTITY_ROTATION_BIT = 0b00010000;
+  private static final byte ENTITY_ROTATION_BIT = 0b00000100;
 
   private static final byte PLAYER_INPUT_ACTION_BIT     = 0b01;
   private static final byte PLAYER_INPUT_ROTATION_BIT   = 0b10;
@@ -52,12 +50,6 @@ public class Protocol {
     if (!newEntity.getVel().equals(oldEntity.getVel())) {
       bits |= ENTITY_VEL_BIT;
     }
-    if (!newEntity.getAcc().equals(oldEntity.getAcc())) {
-      bits |= ENTITY_ACC_BIT;
-    }
-    if (!newEntity.getForce().equals(oldEntity.getForce())) {
-      bits |= ENTITY_FORCE_BIT;
-    }
     if (Math.abs(newEntity.getRotation() - oldEntity.getRotation()) > 0.001f) {
       bits |= ENTITY_ROTATION_BIT;
     }
@@ -69,14 +61,6 @@ public class Protocol {
     if ((bits & ENTITY_VEL_BIT) != 0) {
       packet.putFloat(newEntity.getVel().x);
       packet.putFloat(newEntity.getVel().y);
-    }
-    if ((bits & ENTITY_ACC_BIT) != 0) {
-      packet.putFloat(newEntity.getAcc().x);
-      packet.putFloat(newEntity.getAcc().y);
-    }
-    if ((bits & ENTITY_FORCE_BIT) != 0) {
-      packet.putFloat(newEntity.getForce().x);
-      packet.putFloat(newEntity.getForce().y);
     }
     if ((bits & ENTITY_ROTATION_BIT) != 0) {
       packet.putFloat(newEntity.getRotation());
@@ -96,16 +80,6 @@ public class Protocol {
       final float y = packet.getFloat();
       entity.setVel(x, y);
     }
-    if ((bits & ENTITY_ACC_BIT) != 0) {
-      final float x = packet.getFloat();
-      final float y = packet.getFloat();
-      entity.setAcc(x, y);
-    }
-    if ((bits & ENTITY_FORCE_BIT) != 0) {
-      final float x = packet.getFloat();
-      final float y = packet.getFloat();
-      entity.setForce(x, y);
-    }
     if ((bits & ENTITY_ROTATION_BIT) != 0) {
       entity.setRotation(packet.getFloat());
     }
@@ -119,10 +93,6 @@ public class Protocol {
     packet.putFloat(entity.getPos().y);
     packet.putFloat(entity.getVel().x);
     packet.putFloat(entity.getVel().y);
-    packet.putFloat(entity.getAcc().x);
-    packet.putFloat(entity.getAcc().y);
-    packet.putFloat(entity.getForce().x);
-    packet.putFloat(entity.getForce().y);
     packet.putFloat(entity.getRotation());
   }
 
@@ -133,12 +103,8 @@ public class Protocol {
     final float posY = packet.getFloat();
     final float velX = packet.getFloat();
     final float velY = packet.getFloat();
-    final float accX = packet.getFloat();
-    final float accY = packet.getFloat();
-    final float forceX = packet.getFloat();
-    final float forceY = packet.getFloat();
     final float rotation = packet.getFloat();
-    return new Entity(id, def, posX, posY, velX, velY, accX, accY, forceX, forceY, rotation);
+    return new Entity(id, def, posX, posY, velX, velY, rotation);
   }
 
   public static void writePlayerInputDelta(final ByteBuffer packet,

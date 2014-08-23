@@ -30,6 +30,8 @@ public class Main {
     final ServerConfig config = new ServerConfig();
 
     final EventBus eventBus = new EventBus();
+    final ServerEntityManager serverEntityManager = new ServerEntityManager();
+    final ServerAreaManager serverAreaManager = new ServerAreaManager();
     final ServerNetworkManager serverNetworkManager = new ServerNetworkManager(eventBus);
     serverNetworkManager.bind(config.getBindAddress(), config.getBindPort());
 
@@ -45,8 +47,9 @@ public class Main {
         Thread.sleep(1);
         continue;
       }
+      for (final Entity entity : serverEntityManager)
       // compute delta
-      final ByteBuffer deltaPacket = Channel.createPacketBuffer();
+      /*final ByteBuffer deltaPacket = Channel.createPacketBuffer();
       deltaPacket.putInt(frame);
       deltaPacket.flip();
       // send data to clients
@@ -61,6 +64,7 @@ public class Main {
           clientChannelIterator.remove();
         }
       }
+      */
     }
   }
 }
