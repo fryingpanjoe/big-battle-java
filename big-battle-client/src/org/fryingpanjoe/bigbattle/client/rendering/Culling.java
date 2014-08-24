@@ -18,8 +18,8 @@ public class Culling {
     final float minY = -2.f * SQRT_TWO * d - 1.f;
     final float maxY =  2.f * SQRT_TWO * d + 1.f;
     // project point inside camera frustum
-    final float relX = x - camera.getPos().x;
-    final float relY = -(y - camera.getPos().y);
+    final float relX = x - camera.getPosition().x;
+    final float relY = -(y - camera.getPosition().y);
     final float projX = (relX + relY) * SQRT_TWO_OVER_TWO;
     final float projY = (relY - relX) * SQRT_TWO_OVER_TWO;
     return projX < minX || projX > maxX || projY < minY || projY > maxY;
@@ -32,8 +32,8 @@ public class Culling {
     // approximate using bounding sphere
     final float camRadius = 2.f * SQRT_TWO * camera.getScale() + 1.f;
     final float combinedRadius = camRadius + radius;
-    final float relX = x - camera.getPos().x;
-    final float relY = -(y - camera.getPos().y);
+    final float relX = x - camera.getPosition().x;
+    final float relY = -(y - camera.getPosition().y);
     final float projX = (relX + relY) * SQRT_TWO_OVER_TWO;
     final float projY = (relY - relX) * SQRT_TWO_OVER_TWO;
     return (projX * projX + projY * projY) < (combinedRadius * combinedRadius);

@@ -52,8 +52,8 @@ public class TerrainRenderer {
 
   public void renderTerrainPatch(final IsometricCamera camera, final TerrainPatch patch) {
     final float d = camera.getScale();
-    final float cx = camera.getPos().x;
-    final float cy = camera.getPos().y;
+    final float cx = camera.getPosition().x;
+    final float cy = camera.getPosition().y;
     final float minX = -d - 1.f;
     final float maxX =  d + 1.f;
     final float minY = -2.f * SQRT_TWO * d - 1.f;

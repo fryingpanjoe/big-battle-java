@@ -41,26 +41,24 @@ public class Roaming {
         if (this.thinkTime <= 0.f) {
           final float direction = randomDirection();
           final float radius = randomDistance();
-          this.target.x = this.entity.getEntity().getPos().x + radius * (float) Math.cos(direction);
-          this.target.y = this.entity.getEntity().getPos().y + radius * (float) Math.sin(direction);
+          this.target.x = this.entity.getEntity().getX() + radius * (float) Math.cos(direction);
+          this.target.y = this.entity.getEntity().getY() + radius * (float) Math.sin(direction);
         }
       }
     } else {
       final Vector2f moveDir = new Vector2f(
-        this.target.x - this.entity.getEntity().getPos().x,
-        this.target.y - this.entity.getEntity().getPos().y);
+        this.target.x - this.entity.getEntity().getX(),
+        this.target.y - this.entity.getEntity().getY());
       moveDir.normalise();
-      final Vector2f velocity = new Vector2f(this.entity.getEntity().getVel());
+      final Vector2f velocity = new Vector2f(
+        this.entity.getEntity().getVelocityX(),
+        this.entity.getEntity().getVelocityY());
       final float turnSpeedFactor = Math.abs(Vector2f.angle(velocity, moveDir)) / (float) Math.PI;
       final float speed = this.entity.getEntity().getDef().getSpeed();
-      velocity.x += turnSpeedFactor * speed * moveDir.x + velocity.x;
-      velocity.y += turnSpeedFactor * speed * moveDir.y + velocity.y;
+      velocity.x += dt * turnSpeedFactor * speed * moveDir.x + velocity.x;
+      velocity.y += dt * turnSpeedFactor * speed * moveDir.y + velocity.y;
       velocity.scale(speed / (float) velocity.length());
-      this.entity.getEntity().setVel(velocity.x, velocity.y);
-      final Vector2f position = new Vector2f(this.entity.getEntity().getPos());
-      position.x += velocity.x * dt;
-      position.y += velocity.y * dt;
-      this.entity.getEntity().setPos(position.x, position.y);
+      this.entity.getEntity().setVelocity(velocity.x, velocity.y);
     }
   }
 
@@ -85,8 +83,8 @@ public class Roaming {
     return Intersecting.pointSphere(
       this.target.x,
       this.target.y,
-      this.entity.getEntity().getPos().x,
-      this.entity.getEntity().getPos().y,
+      this.entity.getEntity().getX(),
+      this.entity.getEntity().getY(),
       this.entity.getEntity().getDef().getRadius());
   }
 }

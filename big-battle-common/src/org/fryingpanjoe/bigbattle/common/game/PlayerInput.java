@@ -5,13 +5,12 @@ import java.util.EnumSet;
 public class PlayerInput {
 
   public enum Action {
-    MovingForward,
-    MovingBackward,
-    MovingLeft,
-    MovingRight,
+    MovingNorth,
+    MovingSouth,
+    MovingEast,
+    MovingWest,
     Running,
     Attacking,
-    UsingItem,
   }
 
   private EnumSet<Action> actions;

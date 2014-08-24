@@ -24,13 +24,13 @@ public class Intersecting {
     return (dx * dx) + (dy * dy) <= (r * r);
   }
 
-  public static boolean sphereSphere(final float sx0,
-                                     final float sy0,
+  public static boolean sphereSphere(final float x0,
+                                     final float y0,
                                      final float r0,
-                                     final float sx1,
-                                     final float sy1,
+                                     final float x1,
+                                     final float y1,
                                      final float r1) {
-    return pointSphere(sx0, sy0, sx1, sy1, r0 + r1);
+    return pointSphere(x0, y0, x1, y1, r0 + r1);
   }
 
   public static boolean sphereAabb(final float sx,

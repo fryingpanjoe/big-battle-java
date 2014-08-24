@@ -1,15 +1,23 @@
 package org.fryingpanjoe.bigbattle.client;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Logger;
 
 import org.fryingpanjoe.bigbattle.client.activities.Activity;
 import org.fryingpanjoe.bigbattle.client.activities.MultiplayerActivity;
 import org.fryingpanjoe.bigbattle.client.config.ClientConfig;
+import org.fryingpanjoe.bigbattle.client.events.ConnectedEvent;
+import org.fryingpanjoe.bigbattle.client.events.DisconnectedEvent;
 import org.fryingpanjoe.bigbattle.client.rendering.Defaults;
 import org.fryingpanjoe.bigbattle.client.rendering.EntityRenderer;
 import org.fryingpanjoe.bigbattle.client.rendering.TerrainRenderer;
+import org.fryingpanjoe.bigbattle.common.events.EnterGameEvent;
 import org.fryingpanjoe.bigbattle.common.game.PlayerInput;
+import org.fryingpanjoe.bigbattle.common.networking.Channel;
+import org.fryingpanjoe.bigbattle.common.networking.Protocol;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -17,6 +25,7 @@ import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 
 import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 
 public class Main {
 
@@ -41,63 +50,87 @@ public class Main {
       Defaults.setupViewportFromDisplay();
 
       final EventBus eventBus = new EventBus();
-      final ClientNetworkManager clientNetworkManager = new ClientNetworkManager(eventBus);
-      final ClientEntityManager clientEntityManager = new ClientEntityManager();
-      eventBus.register(clientEntityManager);
-      final ClientPlayerManager clientPlayerManager = new ClientPlayerManager(clientEntityManager);
-      eventBus.register(clientPlayerManager);
-      final ClientTerrainManager clientTerrainManager = new ClientTerrainManager();
+      final ClientNetworkManager networkManager = new ClientNetworkManager(eventBus);
+      final ClientEntityManager entityManager = new ClientEntityManager();
+      eventBus.register(entityManager);
+      final ClientTerrainManager terrainManager = new ClientTerrainManager();
       final TerrainRenderer terrainRenderer = new TerrainRenderer();
       final EntityRenderer entityRenderer = new EntityRenderer();
       final Keybinding keybinding = new Keybinding();
-      keybinding.bind(Keyboard.KEY_W, PlayerInput.Action.MovingForward);
-      keybinding.bind(Keyboard.KEY_S, PlayerInput.Action.MovingBackward);
-      keybinding.bind(Keyboard.KEY_A, PlayerInput.Action.MovingLeft);
-      keybinding.bind(Keyboard.KEY_D, PlayerInput.Action.MovingRight);
+      keybinding.bind(Keyboard.KEY_W, PlayerInput.Action.MovingNorth);
+      keybinding.bind(Keyboard.KEY_S, PlayerInput.Action.MovingSouth);
+      keybinding.bind(Keyboard.KEY_A, PlayerInput.Action.MovingWest);
+      keybinding.bind(Keyboard.KEY_D, PlayerInput.Action.MovingEast);
       keybinding.bind(Keyboard.KEY_LSHIFT, PlayerInput.Action.Running);
       keybinding.bind(Keybinding.MOUSE1, PlayerInput.Action.Attacking);
-      keybinding.bind(Keybinding.MOUSE2, PlayerInput.Action.UsingItem);
-      final Activity activity = new MultiplayerActivity(
-        eventBus,
-        clientNetworkManager,
-        clientEntityManager,
-        clientPlayerManager,
-        clientTerrainManager,
-        terrainRenderer,
-        entityRenderer,
-        keybinding);
-      eventBus.register(activity);
 
-      clientNetworkManager.connect("192.168.1.76", 12345);
+      final List<Activity> activityStack = new LinkedList<>();
+
+      final Object eventHandler = new Object() {
+
+        @Subscribe
+        public void onEnterGameEvent(final EnterGameEvent event) throws IOException {
+          final Activity activity = new MultiplayerActivity(
+            event.clientId,
+            event.entityId,
+            networkManager,
+            entityManager,
+            terrainManager,
+            terrainRenderer,
+            entityRenderer,
+            keybinding);
+          eventBus.register(activity);
+          activityStack.add(0, activity);
+        }
+
+        @Subscribe
+        public void onConnectedEvent(final ConnectedEvent event) {
+          final ByteBuffer packet = Channel.createPacketBuffer();
+          Protocol.writePacketHeader(packet, Protocol.PacketType.Hello);
+          packet.flip();
+          networkManager.sendPacketToServer(packet);
+        }
+
+        @Subscribe
+        public void onDisconnectedEvent(final DisconnectedEvent event) {
+          eventBus.unregister(activityStack.remove(0));
+        }
+      };
+      eventBus.register(eventHandler);
+
+      networkManager.connect("192.168.1.76", 12345);
 
       int mouseWheel = 0;
 
       final FpsCounter fpsCounter = new FpsCounter();
       while (!Display.isCloseRequested()) {
-        for (int i = 0; i < Keyboard.getNumKeyboardEvents(); ++i) {
-          activity.key(
-            Keyboard.getEventKey(), Keyboard.getEventCharacter(), Keyboard.getEventKeyState());
-        }
-        while (Mouse.next()) {
-          if (Mouse.getEventButton() != -1) {
+        if (!activityStack.isEmpty()) {
+          final Activity activity = activityStack.get(0);
+          for (int i = 0; i < Keyboard.getNumKeyboardEvents(); ++i) {
             activity.key(
-              Keyboard.KEYBOARD_SIZE + Mouse.getEventButton(), '\0', Mouse.getEventButtonState());
+              Keyboard.getEventKey(), Keyboard.getEventCharacter(), Keyboard.getEventKeyState());
           }
-          if (Mouse.getEventDWheel() != mouseWheel) {
-            final int key = Mouse.getEventDWheel() < 0 ?
-              Keybinding.MOUSE_WHEELDOWN : Keybinding.MOUSE_WHEELUP;
-            if (Mouse.getEventDWheel() == 0) {
-              activity.key(key, '\0', true);
-            } else {
-              activity.key(key, '\0', false);
+          while (Mouse.next()) {
+            if (Mouse.getEventButton() != -1) {
+              activity.key(
+                Keyboard.KEYBOARD_SIZE + Mouse.getEventButton(), '\0', Mouse.getEventButtonState());
             }
-            mouseWheel = Mouse.getEventDWheel();
+            if (Mouse.getEventDWheel() != mouseWheel) {
+              final int key = Mouse.getEventDWheel() < 0 ?
+                Keybinding.MOUSE_WHEELDOWN : Keybinding.MOUSE_WHEELUP;
+              if (Mouse.getEventDWheel() == 0) {
+                activity.key(key, '\0', true);
+              } else {
+                activity.key(key, '\0', false);
+              }
+              mouseWheel = Mouse.getEventDWheel();
+            }
           }
+          if (!activity.update()) {
+            break;
+          }
+          activity.draw();
         }
-        if (!activity.update()) {
-          break;
-        }
-        activity.draw();
         Display.update();
         if (config.getDisplayFps().isPresent()) {
           Display.sync(config.getDisplayFps().get());

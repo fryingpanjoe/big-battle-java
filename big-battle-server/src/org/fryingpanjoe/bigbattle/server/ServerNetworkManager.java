@@ -19,6 +19,7 @@ import org.fryingpanjoe.bigbattle.server.events.ClientConnectedEvent;
 import org.fryingpanjoe.bigbattle.server.events.ClientDisconnectedEvent;
 import org.fryingpanjoe.bigbattle.server.events.ServerOfflineEvent;
 import org.fryingpanjoe.bigbattle.server.events.ServerOnlineEvent;
+import org.fryingpanjoe.bigbattle.server.events.ServerPlayerInputEvent;
 import org.lwjgl.Sys;
 
 import com.google.common.eventbus.EventBus;
@@ -35,23 +36,17 @@ public class ServerNetworkManager {
     private final Channel channel;
     private final SocketAddress address;
 
-    private long receivedPacketAt;
-    private int frame;
+    private long timeout;
 
     public Client(final int id, final Channel channel, final SocketAddress address) {
       this.id = id;
       this.channel = channel;
       this.address = address;
-      this.receivedPacketAt = 0;
-      this.frame = -1;
+      this.timeout = Sys.getTime();
     }
 
-    public void setReceivedPacketAt(final long receivedPacketAt) {
-      this.receivedPacketAt = receivedPacketAt;
-    }
-
-    public void setFrame(final int frame) {
-      this.frame = frame;
+    public void resetTimeout() {
+      this.timeout = Sys.getTime();
     }
 
     public int getId() {
@@ -66,12 +61,8 @@ public class ServerNetworkManager {
       return this.address;
     }
 
-    public long getReceivedPacketAt() {
-      return this.receivedPacketAt;
-    }
-
-    public int getFrame() {
-      return this.frame;
+    public boolean isTimeout() {
+      return (Sys.getTime() - this.timeout) >= TIMEOUT_MS;
     }
   }
 
@@ -113,11 +104,10 @@ public class ServerNetworkManager {
   }
 
   public void checkTimeouts() {
-    final long now = Sys.getTime();
     final Iterator<Client> clientIterator = this.clients.iterator();
     while (clientIterator.hasNext()) {
       final Client client = clientIterator.next();
-      if ((now - client.getReceivedPacketAt()) >= TIMEOUT_MS) {
+      if (client.isTimeout()) {
         LOG.info("Client timed out: " + client.getId());
         clientIterator.remove();
         this.eventBus.post(new ClientDisconnectedEvent(client.getId()));
@@ -132,25 +122,38 @@ public class ServerNetworkManager {
         final SocketAddress address = this.socket.receive(receivedData);
         if (address != null) {
           receivedData.flip();
-          Client fromClient = null;
-          for (final Client client : this.clients) {
+          boolean found = false;
+          final Iterator<Client> clientIterator = this.clients.iterator();
+          while (clientIterator.hasNext()) {
+            final Client client = clientIterator.next();
             if (client.getAddress().equals(address)) {
-              fromClient = client;
+              found = true;
+              final Packet packet = client.getChannel().onDataReceived(receivedData);
+              if (packet != null) {
+                client.resetTimeout();
+                if (!onPacketReceivedFromClient(client.getId(), packet)) {
+                  LOG.info("Client disconnected: " + client.getId());
+                  clientIterator.remove();
+                  this.eventBus.post(new ClientDisconnectedEvent(client.getId()));
+                }
+              }
               break;
             }
           }
-          if (fromClient == null) {
-            LOG.info("Client connected: " + ((InetSocketAddress) address).getHostString());
-            fromClient = new Client(
-              this.clientIdGenerator, new Channel(this.socket, address), address);
-            ++this.clientIdGenerator;
-            this.clients.add(fromClient);
-            this.eventBus.post(new ClientConnectedEvent(fromClient.getId()));
-          }
-          final Packet packet = fromClient.getChannel().onDataReceived(receivedData);
-          if (packet != null) {
-            onPacketReceivedFromClient(fromClient.getId(), packet);
-            fromClient.setReceivedPacketAt(Sys.getTime());
+          if (!found) {
+            final Channel channel = new Channel(this.socket, address);
+            final Packet packet = channel.onDataReceived(receivedData);
+            final ByteBuffer packetDataBuffer = ByteBuffer.wrap(packet.getData());
+            final Protocol.PacketType packetType = Protocol.readPacketHeader(packetDataBuffer);
+            if (packetType == Protocol.PacketType.Hello) {
+              final Client client = new Client(getNextClientId(), channel, address);
+              this.clients.add(client);
+              LOG.info(
+                String.format(
+                  "Client %d connected (%s)",
+                  client.getId(), ((InetSocketAddress) address).getHostString()));
+              this.eventBus.post(new ClientConnectedEvent(client.getId()));
+            }
           }
         } else {
           break;
@@ -196,10 +199,24 @@ public class ServerNetworkManager {
     }
   }
 
-  private void onPacketReceivedFromClient(final int clientId, final Packet packet) {
+  private boolean onPacketReceivedFromClient(final int clientId, final Packet packet) {
     final ByteBuffer data = ByteBuffer.wrap(packet.getData());
     final Protocol.PacketType packetType = Protocol.readPacketHeader(data);
-    // TODO parse packet based on type
-    // TODO post stuff to eventBus
+    switch (packetType) {
+      case PlayerInput:
+        this.eventBus.post(new ServerPlayerInputEvent(clientId, Protocol.readPlayerInput(data)));
+        break;
+
+      case Goodbye:
+        return false;
+
+      default:
+        break;
+    }
+    return true;
+  }
+
+  private int getNextClientId() {
+    return this.clientIdGenerator++;
   }
 }

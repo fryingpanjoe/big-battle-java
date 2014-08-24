@@ -67,8 +67,8 @@ public class EntityRenderer {
     matrix.setIdentity();
     for (final RenderEntity renderEntity : renderEntities) {
       final Entity entity = renderEntity.getEntity();
-      final float x = entity.getPos().x;
-      final float y = entity.getPos().y;
+      final float x = entity.getX();
+      final float y = entity.getY();
       final boolean culled = Culling.cullSphere(
         camera, x, y, entity.getDef().getRadius());
       if (!culled) {

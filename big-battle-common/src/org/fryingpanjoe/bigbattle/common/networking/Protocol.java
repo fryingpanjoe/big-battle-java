@@ -3,6 +3,9 @@ package org.fryingpanjoe.bigbattle.common.networking;
 import java.nio.ByteBuffer;
 import java.util.EnumSet;
 
+import org.fryingpanjoe.bigbattle.common.events.EnterGameEvent;
+import org.fryingpanjoe.bigbattle.common.events.EntityLostEvent;
+import org.fryingpanjoe.bigbattle.common.events.EntityNoticedEvent;
 import org.fryingpanjoe.bigbattle.common.game.Entity;
 import org.fryingpanjoe.bigbattle.common.game.EntityDefinition;
 import org.fryingpanjoe.bigbattle.common.game.EntityDefinitions;
@@ -12,18 +15,15 @@ import org.fryingpanjoe.bigbattle.common.game.PlayerInput.Action;
 public class Protocol {
 
   public enum PacketType {
+    Hello,
+    Goodbye,
+    EnterGameEvent,
     EntityDelta,
     Entity,
-    PlayerInputDelta,
     PlayerInput,
+    EntityNoticedEvent,
+    EntityLostEvent,
   }
-
-  private static final byte ENTITY_POS_BIT      = 0b00000001;
-  private static final byte ENTITY_VEL_BIT      = 0b00000010;
-  private static final byte ENTITY_ROTATION_BIT = 0b00000100;
-
-  private static final byte PLAYER_INPUT_ACTION_BIT     = 0b01;
-  private static final byte PLAYER_INPUT_ROTATION_BIT   = 0b10;
 
   private Protocol() {
   }
@@ -40,59 +40,62 @@ public class Protocol {
     return PacketType.values()[type];
   }
 
+  public static void writeEnterGameEvent(final ByteBuffer packet,
+                                         final EnterGameEvent event) {
+    packet.putInt(event.clientId);
+    packet.putInt(event.entityId);
+  }
+
+  public static EnterGameEvent readEnterGameEvent(final ByteBuffer packet) {
+    final int clientId = packet.getInt();
+    final int entityId = packet.getInt();
+    return new EnterGameEvent(clientId, entityId);
+  }
+
   public static void writeEntityDelta(final ByteBuffer packet,
-                                      final Entity oldEntity,
-                                      final Entity newEntity) {
-    int bits = 0;
-    if (!newEntity.getPos().equals(oldEntity.getPos())) {
-      bits |= ENTITY_POS_BIT;
+                                      final Entity entity) {
+    final byte bits = entity.getUpdateBits();
+    packet.put(bits);
+    if ((bits & Entity.POSITION_BIT) != 0) {
+      packet.putFloat(entity.getX());
+      packet.putFloat(entity.getY());
     }
-    if (!newEntity.getVel().equals(oldEntity.getVel())) {
-      bits |= ENTITY_VEL_BIT;
+    if ((bits & Entity.VELOCITY_BIT) != 0) {
+      packet.putFloat(entity.getVelocityX());
+      packet.putFloat(entity.getVelocityY());
     }
-    if (Math.abs(newEntity.getRotation() - oldEntity.getRotation()) > 0.001f) {
-      bits |= ENTITY_ROTATION_BIT;
-    }
-    packet.putInt(bits);
-    if ((bits & ENTITY_POS_BIT) != 0) {
-      packet.putFloat(newEntity.getPos().x);
-      packet.putFloat(newEntity.getPos().y);
-    }
-    if ((bits & ENTITY_VEL_BIT) != 0) {
-      packet.putFloat(newEntity.getVel().x);
-      packet.putFloat(newEntity.getVel().y);
-    }
-    if ((bits & ENTITY_ROTATION_BIT) != 0) {
-      packet.putFloat(newEntity.getRotation());
+    if ((bits & Entity.ROTATION_BIT) != 0) {
+      packet.putFloat(entity.getRotation());
     }
   }
 
   public static void readEntityDelta(final ByteBuffer packet,
                                      final Entity entity) {
-    final int bits = packet.getInt();
-    if ((bits & ENTITY_POS_BIT) != 0) {
+    final byte bits = packet.get();
+    if ((bits & Entity.POSITION_BIT) != 0) {
       final float x = packet.getFloat();
       final float y = packet.getFloat();
-      entity.setPos(x, y);
+      entity.setPosition(x, y);
     }
-    if ((bits & ENTITY_VEL_BIT) != 0) {
+    if ((bits & Entity.VELOCITY_BIT) != 0) {
       final float x = packet.getFloat();
       final float y = packet.getFloat();
-      entity.setVel(x, y);
+      entity.setVelocity(x, y);
     }
-    if ((bits & ENTITY_ROTATION_BIT) != 0) {
+    if ((bits & Entity.ROTATION_BIT) != 0) {
       entity.setRotation(packet.getFloat());
     }
+    entity.resetUpdateBits(bits);
   }
 
   public static void writeEntity(final ByteBuffer packet,
                                  final Entity entity) {
     packet.putInt(entity.getId());
     packet.putInt(entity.getDef().getId());
-    packet.putFloat(entity.getPos().x);
-    packet.putFloat(entity.getPos().y);
-    packet.putFloat(entity.getVel().x);
-    packet.putFloat(entity.getVel().y);
+    packet.putFloat(entity.getX());
+    packet.putFloat(entity.getY());
+    packet.putFloat(entity.getVelocityX());
+    packet.putFloat(entity.getVelocityY());
     packet.putFloat(entity.getRotation());
   }
 
@@ -107,36 +110,6 @@ public class Protocol {
     return new Entity(id, def, posX, posY, velX, velY, rotation);
   }
 
-  public static void writePlayerInputDelta(final ByteBuffer packet,
-                                           final PlayerInput oldPlayerInput,
-                                           final PlayerInput newPlayerInput) {
-    byte bits = 0;
-    if (!newPlayerInput.getActions().equals(oldPlayerInput.getActions())) {
-      bits |= PLAYER_INPUT_ACTION_BIT;
-    }
-    if (Math.abs(newPlayerInput.getRotation() - oldPlayerInput.getRotation()) > 0.001f) {
-      bits |= PLAYER_INPUT_ROTATION_BIT;
-    }
-    packet.put(bits);
-    if ((bits & PLAYER_INPUT_ACTION_BIT) != 0) {
-      packet.putInt(playerInputActionsToInteger(newPlayerInput.getActions()));
-    }
-    if ((bits & PLAYER_INPUT_ROTATION_BIT) != 0) {
-      packet.putFloat(newPlayerInput.getRotation());
-    }
-  }
-
-  public static void readPlayerInputDelta(final ByteBuffer packet,
-                                          final PlayerInput playerInput) {
-    final byte bits = packet.get();
-    if ((bits & PLAYER_INPUT_ACTION_BIT) != 0) {
-      playerInput.setActions(playerInputActionsFromInteger(packet.getInt()));
-    }
-    if ((bits & PLAYER_INPUT_ROTATION_BIT) != 0) {
-      playerInput.setRotation(packet.getFloat());
-    }
-  }
-
   public static void writePlayerInput(final ByteBuffer packet,
                                       final PlayerInput playerInput) {
     packet.putInt(playerInputActionsToInteger(playerInput.getActions()));
@@ -147,6 +120,26 @@ public class Protocol {
     final EnumSet<Action> actions = playerInputActionsFromInteger(packet.getInt());
     final float rotation = packet.getFloat();
     return new PlayerInput(actions, rotation);
+  }
+
+  public static void writeEntityNoticedEvent(final ByteBuffer packet,
+                                             final EntityNoticedEvent event) {
+    writeEntity(packet, event.entity);
+  }
+
+  public static EntityNoticedEvent readEntityNoticedEvent(final ByteBuffer packet) {
+    final Entity entity = readEntity(packet);
+    return new EntityNoticedEvent(entity);
+  }
+
+  public static void writeEntityLostEvent(final ByteBuffer packet,
+                                          final EntityLostEvent event) {
+    packet.putInt(event.entityId);
+  }
+
+  public static EntityLostEvent readEntityLostEvent(final ByteBuffer packet) {
+    final int entityId = packet.getInt();
+    return new EntityLostEvent(entityId);
   }
 
   private static int playerInputActionsToInteger(final EnumSet<Action> actions) {

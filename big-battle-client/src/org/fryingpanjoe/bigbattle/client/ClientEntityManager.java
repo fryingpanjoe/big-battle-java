@@ -5,8 +5,8 @@ import java.util.Map;
 
 import org.fryingpanjoe.bigbattle.client.game.ClientEntity;
 import org.fryingpanjoe.bigbattle.client.rendering.RenderEntity;
-import org.fryingpanjoe.bigbattle.common.events.LostEntityEvent;
-import org.fryingpanjoe.bigbattle.common.events.NoticeEntityEvent;
+import org.fryingpanjoe.bigbattle.common.events.EntityLostEvent;
+import org.fryingpanjoe.bigbattle.common.events.EntityNoticedEvent;
 
 import com.google.common.eventbus.Subscribe;
 
@@ -29,14 +29,14 @@ public class ClientEntityManager {
   }
 
   @Subscribe
-  public void onNoticeEntityEvent(final NoticeEntityEvent event) {
+  public void onNoticeEntityEvent(final EntityNoticedEvent event) {
     this.entities.put(event.entity.getId(), new ClientEntity(event.entity));
     this.renderEntities.put(event.entity.getId(), new RenderEntity(event.entity));
   }
 
   @Subscribe
-  public void onLostEntityEvent(final LostEntityEvent event) {
-    this.renderEntities.remove(event.id);
-    this.entities.remove(event.id);
+  public void onLostEntityEvent(final EntityLostEvent event) {
+    this.renderEntities.remove(event.entityId);
+    this.entities.remove(event.entityId);
   }
 }

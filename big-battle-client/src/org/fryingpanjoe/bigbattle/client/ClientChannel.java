@@ -5,14 +5,11 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
-import java.util.logging.Logger;
 
 import org.fryingpanjoe.bigbattle.common.networking.Channel;
 import org.fryingpanjoe.bigbattle.common.networking.Packet;
 
 public class ClientChannel {
-
-  private static final Logger LOG = Logger.getLogger(ClientChannel.class.getName());
 
   private final Channel channel;
   private final DatagramChannel socket;

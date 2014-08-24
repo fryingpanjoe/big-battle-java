@@ -5,12 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.fryingpanjoe.bigbattle.server.events.EntityKilledEvent;
-import org.fryingpanjoe.bigbattle.server.events.EntityMovedEvent;
-import org.fryingpanjoe.bigbattle.server.events.EntitySpawnedEvent;
 import org.fryingpanjoe.bigbattle.server.game.ServerEntity;
-
-import com.google.common.eventbus.Subscribe;
 
 public class ServerEntityManager {
 
@@ -22,32 +17,41 @@ public class ServerEntityManager {
     this.quadtree = new Quadtree<>();
   }
 
-  @Subscribe
-  public void onEntitySpawnedEvent(final EntitySpawnedEvent event) {
-    this.entities.put(event.entity.getEntity().getId(), event.entity);
-    this.quadtree.insert(
-      event.entity, event.entity.getEntity().getPos().x, event.entity.getEntity().getPos().y);
+  public void updatePositions(final float dt) {
+    for (final ServerEntity entity : this.entities.values()) {
+      final float x = entity.getEntity().getX() + entity.getEntity().getVelocityX() * dt;
+      final float y = entity.getEntity().getY() + entity.getEntity().getVelocityY() * dt;
+      if (x != entity.getEntity().getX() && y != entity.getEntity().getY()) {
+        entity.getEntity().setPosition(x, y);
+        this.quadtree.remove(entity);
+        this.quadtree.insert(entity, entity.getEntity().getX(), entity.getEntity().getY());
+      }
+    }
   }
 
-  @Subscribe
-  public void onEntityKilledEvent(final EntityKilledEvent event) {
-    this.entities.remove(event.entity.getEntity().getId());
-    this.quadtree.remove(event.entity);
+  public void addEntity(final ServerEntity entity) {
+    this.entities.put(entity.getEntity().getId(), entity);
+    this.quadtree.insert(entity, entity.getEntity().getX(), entity.getEntity().getY());
   }
 
-  @Subscribe
-  public void onEntityMovedEvent(final EntityMovedEvent event) {
-    this.quadtree.remove(event.entity);
-    this.quadtree.insert(
-      event.entity, event.entity.getEntity().getPos().x, event.entity.getEntity().getPos().y);
+  public void removeEntityById(final int entityId) {
+    final ServerEntity entity = this.entities.get(entityId);
+    if (entity != null) {
+      this.entities.remove(entity.getEntity().getId());
+      this.quadtree.remove(entity);
+    }
+  }
+
+  public ServerEntity getEntity(final int entityId) {
+    return this.entities.get(entityId);
   }
 
   public List<ServerEntity> getEntitiesInSphere(final float x, final float y, final float r) {
     final List<ServerEntity> found = getEntitiesInAabb(x - r, y - r, x + r, y + r);
     final List<ServerEntity> result = new ArrayList<>(found.size());
     for (final ServerEntity entity : found) {
-      final float ex = entity.getEntity().getPos().x;
-      final float ey = entity.getEntity().getPos().y;
+      final float ex = entity.getEntity().getX();
+      final float ey = entity.getEntity().getY();
       final float er = entity.getEntity().getDef().getRadius();
       if (Intersecting.sphereSphere(x, y, r, ex, ey, er)) {
         result.add(entity);
@@ -61,9 +65,5 @@ public class ServerEntityManager {
                                               final float x1,
                                               final float y1) {
     return this.quadtree.queryAabb(x0, y0, x1 - x0, y1 - y0);
-  }
-
-  public Map<Integer, ServerEntity> getEntities() {
-    return this.entities;
   }
 }

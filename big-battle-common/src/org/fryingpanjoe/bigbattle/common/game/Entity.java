@@ -1,29 +1,70 @@
 package org.fryingpanjoe.bigbattle.common.game;
 
-import org.lwjgl.util.vector.Vector2f;
-
 public class Entity {
+
+  public static final byte POSITION_BIT    = 0b00000001;
+  public static final byte VELOCITY_BIT    = 0b00000010;
+  public static final byte ROTATION_BIT    = 0b00000100;
 
   private final int id;
   private final EntityDefinition def;
-  private Vector2f pos = new Vector2f();
-  private Vector2f vel = new Vector2f();
+
+  private byte updateBits;
+
+  private float x;
+  private float y;
+  private float velx;
+  private float vely;
   private float rotation;
 
   public Entity(final int id,
                 final EntityDefinition def,
                 final float x,
                 final float y,
-                final float velX,
-                final float velY,
+                final float velx,
+                final float vely,
                 final float rotation) {
     this.id = id;
     this.def = def;
-    this.pos.x = x;
-    this.pos.y = y;
-    this.vel.x = velX;
-    this.vel.y = velY;
+    this.updateBits = 0;
+    this.x = x;
+    this.y = y;
+    this.velx = velx;
+    this.vely = vely;
     this.rotation = rotation;
+  }
+
+  public boolean checkUpdateBits(final byte bits) {
+    return (this.updateBits & bits) == bits;
+  }
+
+  public void resetUpdateBits(final byte bits) {
+    this.updateBits &= ~bits;
+  }
+
+  public void clearUpdateBits() {
+    this.updateBits = 0;
+  }
+
+  public void setUpdateBits(final byte bits) {
+    this.updateBits = bits;
+  }
+
+  public void setPosition(final float x, final float y) {
+    this.x = x;
+    this.y = y;
+    this.updateBits |= POSITION_BIT;
+  }
+
+  public void setVelocity(final float velx, final float vely) {
+    this.velx = x;
+    this.vely = y;
+    this.updateBits |= VELOCITY_BIT;
+  }
+
+  public void setRotation(final float rotation) {
+    this.rotation = rotation;
+    this.updateBits |= ROTATION_BIT;
   }
 
   public int getId() {
@@ -34,26 +75,24 @@ public class Entity {
     return this.def;
   }
 
-  public void setPos(final float x, final float y) {
-    this.pos.x = x;
-    this.pos.y = y;
+  public byte getUpdateBits() {
+    return this.updateBits;
   }
 
-  public void setVel(final float x, final float y) {
-    this.vel.x = x;
-    this.vel.y = y;
+  public float getX() {
+    return this.x;
   }
 
-  public void setRotation(final float rotation) {
-    this.rotation = rotation;
+  public float getY() {
+    return this.y;
   }
 
-  public Vector2f getPos() {
-    return this.pos;
+  public float getVelocityX() {
+    return this.velx;
   }
 
-  public Vector2f getVel() {
-    return this.vel;
+  public float getVelocityY() {
+    return this.vely;
   }
 
   public float getRotation() {
