@@ -3,6 +3,7 @@ package org.fryingpanjoe.bigbattle.server;
 import java.nio.ByteBuffer;
 import java.util.logging.Logger;
 
+import org.fryingpanjoe.bigbattle.common.events.EnterGameEvent;
 import org.fryingpanjoe.bigbattle.common.events.EntityLostEvent;
 import org.fryingpanjoe.bigbattle.common.events.EntityNoticedEvent;
 import org.fryingpanjoe.bigbattle.common.networking.Channel;
@@ -42,9 +43,11 @@ public class Main {
         final float x = 100.f;
         final float y = 100.f;
         final ServerPlayer player = spawner.spawnClientPlayer(event.clientId, x, y);
-        //final ByteBuffer packet = Channel.createPacketBuffer();
-        //Protocol.writeEntity(packet, entity);
-        //networkManager.sendPacketTo(clientId, packet);
+        final ByteBuffer packet = Channel.createPacketBuffer();
+        Protocol.writeEnterGameEvent(
+          packet, new EnterGameEvent(event.clientId, player.getServerEntity().getEntity().getId()));
+        packet.flip();
+        networkManager.sendPacketTo(event.clientId, packet);
       }
 
       @Subscribe
