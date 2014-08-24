@@ -5,10 +5,11 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.DatagramChannel;
-
-import org.newdawn.slick.util.Log;
+import java.util.logging.Logger;
 
 public class Channel {
+
+  private static final Logger LOG = Logger.getLogger(Channel.class.getName());
 
   private static final int MAX_PACKET_SIZE = 512;
 
@@ -34,7 +35,7 @@ public class Channel {
   }
 
   public void sendPacket(final ByteBuffer data) throws IOException {
-    final int serializedPacketSize = 2 + 4 + 2 + data.remaining();
+    final int serializedPacketSize = 2 + 4 + 4 + 4 + 2 + data.remaining();
     if (serializedPacketSize > MAX_PACKET_SIZE) {
       throw new RuntimeException("Packet too big: " + serializedPacketSize);
     }
@@ -54,7 +55,7 @@ public class Channel {
 
   public Packet onDataReceived(final ByteBuffer data) {
     if (data.limit() > 2) {
-      final short packetSize = data.getShort(0);
+      final short packetSize = data.getShort();
       if (data.limit() >= packetSize) {
         final int packetId = data.getInt();
         final int ackPacketId = data.getInt();
@@ -64,10 +65,10 @@ public class Channel {
         data.get(packetData);
         return onPacketReceived(packetId, ackPacketId, ackBits, packetData);
       } else {
-        Log.warn(String.format("Bad packet received: size %d < %d", data.limit(), packetSize));
+        LOG.warning(String.format("Bad packet received: size %d < %d", data.limit(), packetSize));
       }
     } else {
-      Log.warn("Bad packet received: missing header");
+      LOG.warning("Bad packet received: missing header");
     }
     return null;
   }

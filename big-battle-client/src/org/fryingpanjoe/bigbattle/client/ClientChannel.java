@@ -48,7 +48,6 @@ public class ClientChannel {
   }
 
   public void sendPacket(final ByteBuffer data) throws IOException {
-    data.flip();
     this.channel.sendPacket(data);
   }
 }

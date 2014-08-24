@@ -166,7 +166,6 @@ public class ServerNetworkManager {
   }
 
   public void sendPacketTo(final int clientId, final ByteBuffer packet) {
-    packet.flip();
     final Iterator<Client> clientIterator = this.clients.iterator();
     while (clientIterator.hasNext()) {
       final Client client = clientIterator.next();
@@ -184,7 +183,6 @@ public class ServerNetworkManager {
   }
 
   public void sendPacketToAll(final ByteBuffer packet) {
-    packet.flip();
     final Iterator<Client> clientIterator = this.clients.iterator();
     while (clientIterator.hasNext()) {
       final Client client = clientIterator.next();

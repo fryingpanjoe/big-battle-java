@@ -39,11 +39,13 @@ public class Main {
 
       @Subscribe
       public void onClientConnectedEvent(final ClientConnectedEvent event) {
+        LOG.info("Client " + event.clientId + " connected, sending enter game");
         // TODO find valid spawn location
         final float x = 100.f;
         final float y = 100.f;
         final ServerPlayer player = spawner.spawnClientPlayer(event.clientId, x, y);
         final ByteBuffer packet = Channel.createPacketBuffer();
+        Protocol.writePacketHeader(packet, Protocol.PacketType.EnterGameEvent);
         Protocol.writeEnterGameEvent(
           packet, new EnterGameEvent(event.clientId, player.getServerEntity().getEntity().getId()));
         packet.flip();
@@ -70,6 +72,13 @@ public class Main {
     final UpdateTimer serverFrameTimer = UpdateTimer.fromMaxFps(config.getMaxFps());
 
     while (true) {
+      final long timeUntilUpdate = serverFrameTimer.getTimeUntilUpdate();
+      if (timeUntilUpdate > 0) {
+        Thread.sleep(timeUntilUpdate);
+        //Thread.sleep(1);
+        continue;
+      }
+
       // get updates from client
       networkManager.receivePacketsFromClients();
       networkManager.checkTimeouts();
@@ -79,16 +88,9 @@ public class Main {
       final long deltaTime = now - lastUpdatedAt;
       lastUpdatedAt = now;
       final float dt = (float) deltaTime / 1000.f;
-      entityManager.updatePositions(dt);
       playerManager.updatePlayerInput();
+      entityManager.updatePositions(dt);
       noticeManager.updateNotices();
-
-      final long timeUntilUpdate = serverFrameTimer.getTimeUntilUpdate();
-      if (timeUntilUpdate > 0) {
-        //Thread.sleep(timeUntilUpdate);
-        Thread.sleep(1);
-        continue;
-      }
 
       // send updates to clients
       for (final ServerPlayer player : playerManager.getPlayers().values()) {

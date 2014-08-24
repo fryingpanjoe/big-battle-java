@@ -30,8 +30,15 @@ public class ClientEntityManager {
 
   @Subscribe
   public void onNoticeEntityEvent(final EntityNoticedEvent event) {
-    this.entities.put(event.entity.getId(), new ClientEntity(event.entity));
-    this.renderEntities.put(event.entity.getId(), new RenderEntity(event.entity));
+    final ClientEntity entity = this.entities.get(event.entity.getId());
+    if (entity != null) {
+      entity.getEntity().setPosition(event.entity.getX(), event.entity.getY());
+      entity.getEntity().setVelocity(event.entity.getVelocityX(), event.entity.getVelocityY());
+      entity.getEntity().setRotation(event.entity.getRotation());
+    } else {
+      this.entities.put(event.entity.getId(), new ClientEntity(event.entity));
+      this.renderEntities.put(event.entity.getId(), new RenderEntity(event.entity));
+    }
   }
 
   @Subscribe

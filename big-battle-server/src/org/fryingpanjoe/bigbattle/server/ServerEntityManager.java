@@ -21,7 +21,7 @@ public class ServerEntityManager {
     for (final ServerEntity entity : this.entities.values()) {
       final float x = entity.getEntity().getX() + entity.getEntity().getVelocityX() * dt;
       final float y = entity.getEntity().getY() + entity.getEntity().getVelocityY() * dt;
-      if (x != entity.getEntity().getX() && y != entity.getEntity().getY()) {
+      if (x != entity.getEntity().getX() || y != entity.getEntity().getY()) {
         entity.getEntity().setPosition(x, y);
         this.quadtree.remove(entity);
         this.quadtree.insert(entity, entity.getEntity().getX(), entity.getEntity().getY());

@@ -36,6 +36,6 @@ public class Culling {
     final float relY = -(y - camera.getPosition().y);
     final float projX = (relX + relY) * SQRT_TWO_OVER_TWO;
     final float projY = (relY - relX) * SQRT_TWO_OVER_TWO;
-    return (projX * projX + projY * projY) < (combinedRadius * combinedRadius);
+    return (projX * projX + projY * projY) > (combinedRadius * combinedRadius);
   }
 }

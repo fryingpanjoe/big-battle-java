@@ -20,6 +20,10 @@ public class ServerPlayer {
     this.playerInput = playerInput;
   }
 
+  public boolean hasPlayerInput() {
+    return this.playerInput != null;
+  }
+
   public Player getPlayer() {
     return this.player;
   }

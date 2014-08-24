@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.nio.FloatBuffer;
 
 import org.fryingpanjoe.bigbattle.common.game.Entity;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
-import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 import org.newdawn.slick.opengl.Texture;
 
@@ -26,14 +26,12 @@ public class EntityRenderer {
   private static final int VERTEX_OFFSET_UV = 3 * BYTES_PER_FLOAT;
   private static final int VERTEX_OFFSET_NORM = (3 + 2) * BYTES_PER_FLOAT;
 
-  private final FloatBuffer matrixBuffer;
   private final int cubeVertCount;
   private final int cubeVbo;
   private final int shader;
   private final Texture texture;
 
   public EntityRenderer() throws IOException {
-    this.matrixBuffer = FloatBuffer.allocate(4 * 4);
     this.cubeVertCount = StaticGeometries.CUBE_VERT_XYZ.length / 3;
     this.cubeVbo = createVbo(
       StaticGeometries.CUBE_VERT_XYZ,
@@ -61,31 +59,21 @@ public class EntityRenderer {
     GL20.glUseProgram(this.shader);
 
     GL11.glMatrixMode(GL11.GL_MODELVIEW);
-    GL11.glPushMatrix();
-    final Matrix4f matrix = new Matrix4f();
-    final Vector3f translate = new Vector3f();
-    matrix.setIdentity();
     for (final RenderEntity renderEntity : renderEntities) {
       final Entity entity = renderEntity.getEntity();
       final float x = entity.getX();
       final float y = entity.getY();
-      final boolean culled = Culling.cullSphere(
-        camera, x, y, entity.getDef().getRadius());
+      final boolean culled = Culling.cullSphere(camera, x, y, entity.getDef().getRadius());
       if (!culled) {
-        translate.x = x;
-        translate.y = -renderEntity.getSize().y * 0.5f;
-        translate.z = y;
-        Matrix4f.scale(renderEntity.getSize(), matrix, matrix);
-        Matrix4f.rotate(entity.getRotation(), UP, matrix, matrix);
-        Matrix4f.translate(translate, matrix, matrix);
-        this.matrixBuffer.rewind();
-        matrix.store(this.matrixBuffer);
-        this.matrixBuffer.rewind();
-        GL11.glLoadMatrix(this.matrixBuffer);
+        GL11.glPushMatrix();
+        GL11.glTranslatef(x, entity.getDef().getSize().y * 0.5f, y);
+        GL11.glRotatef(entity.getRotation(), UP.x, UP.y, UP.z);
+        GL11.glScalef(
+          entity.getDef().getSize().x, entity.getDef().getSize().y, entity.getDef().getSize().z);
         GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, this.cubeVertCount);
+        GL11.glPopMatrix();
       }
     }
-    GL11.glPopMatrix();
 
     GL20.glUseProgram(0);
 
@@ -102,7 +90,7 @@ public class EntityRenderer {
     assert xyz.length == norm.length && xyz.length / 3 == uv.length / 2 : "vertex count mismatch";
     final int vertCount = xyz.length / 3;
     final int floatCount = vertCount * FLOATS_PER_VERTEX;
-    final FloatBuffer data = FloatBuffer.allocate(floatCount);
+    final FloatBuffer data = BufferUtils.createFloatBuffer(floatCount);
     for (int i = 0; i < vertCount; ++i) {
       // xyz
       data.put(xyz[(i * 3) + 0]);
@@ -117,9 +105,9 @@ public class EntityRenderer {
       data.put(norm[(i * 3) + 2]);
     }
     data.flip();
-    final int id = GL15.glGenBuffers();
-    GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, id);
+    final int vboId = GL15.glGenBuffers();
+    GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
     GL15.glBufferData(GL15.GL_ARRAY_BUFFER, data, GL15.GL_STATIC_DRAW);
-    return id;
+    return vboId;
   }
 }

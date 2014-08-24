@@ -58,7 +58,6 @@ public class MultiplayerActivity implements Activity {
 
   @Override
   public boolean update() {
-    this.networkManager.receivePacketFromServer();
     if (this.inputRate.shouldUpdate()) {
       final ByteBuffer packet = Channel.createPacketBuffer();
       Protocol.writePacketHeader(packet, Protocol.PacketType.PlayerInput);

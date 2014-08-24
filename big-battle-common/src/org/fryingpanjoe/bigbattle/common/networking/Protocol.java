@@ -128,8 +128,7 @@ public class Protocol {
   }
 
   public static EntityNoticedEvent readEntityNoticedEvent(final ByteBuffer packet) {
-    final Entity entity = readEntity(packet);
-    return new EntityNoticedEvent(entity);
+    return new EntityNoticedEvent(readEntity(packet));
   }
 
   public static void writeEntityLostEvent(final ByteBuffer packet,
@@ -145,7 +144,7 @@ public class Protocol {
   private static int playerInputActionsToInteger(final EnumSet<Action> actions) {
     int flags = 0;
     for (final Action action : actions) {
-      flags |= 1 << action.ordinal();
+      flags |= (1 << action.ordinal());
     }
     return flags;
   }

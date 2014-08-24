@@ -51,7 +51,10 @@ public class ClientTerrainManager {
     } catch (final JSONException | IOException e) {
       LOG.warning(
         String.format("Failed to load patch %d,%d: %s", location.x, location.y, e.getMessage()));
-      return TerrainGenerator.generateRandomPatch(PATCH_SIZE, Arrays.asList(0), new Random());
+      final TerrainPatch patch = TerrainGenerator.generateRandomPatch(
+        PATCH_SIZE, Arrays.asList(0), new Random());
+      this.patches.add(new TerrainPatchWithLocation(patch, location));
+      return patch;
     }
   }
 

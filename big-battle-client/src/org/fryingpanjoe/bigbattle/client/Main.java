@@ -35,7 +35,7 @@ public class Main {
 
   public static void main(final String[] argv) {
     try {
-      LOG.info("Starting big-battle-client");
+      LOG.info("Client starting");
 
       final ClientConfig config = new ClientConfig();
 
@@ -70,6 +70,7 @@ public class Main {
 
         @Subscribe
         public void onEnterGameEvent(final EnterGameEvent event) throws IOException {
+          LOG.info("Entering game");
           final Activity activity = new MultiplayerActivity(
             event.clientId,
             event.entityId,
@@ -79,12 +80,12 @@ public class Main {
             terrainRenderer,
             entityRenderer,
             keybinding);
-          eventBus.register(activity);
           activityStack.add(0, activity);
         }
 
         @Subscribe
         public void onConnectedEvent(final ConnectedEvent event) {
+          LOG.info("Connected to server, sending hello");
           final ByteBuffer packet = Channel.createPacketBuffer();
           Protocol.writePacketHeader(packet, Protocol.PacketType.Hello);
           packet.flip();
@@ -93,20 +94,25 @@ public class Main {
 
         @Subscribe
         public void onDisconnectedEvent(final DisconnectedEvent event) {
-          eventBus.unregister(activityStack.remove(0));
+          LOG.info("Disconnected from server");
+          if (!activityStack.isEmpty()) {
+            eventBus.unregister(activityStack.remove(0));
+          }
         }
       };
       eventBus.register(eventHandler);
 
-      networkManager.connect("192.168.1.76", 12345);
+      networkManager.connect("localhost", 12345);
 
       int mouseWheel = 0;
 
       final FpsCounter fpsCounter = new FpsCounter();
+
       while (!Display.isCloseRequested()) {
+        networkManager.receivePacketFromServer();
         if (!activityStack.isEmpty()) {
           final Activity activity = activityStack.get(0);
-          for (int i = 0; i < Keyboard.getNumKeyboardEvents(); ++i) {
+          while (Keyboard.next()) {
             activity.key(
               Keyboard.getEventKey(), Keyboard.getEventCharacter(), Keyboard.getEventKeyState());
           }
@@ -136,16 +142,23 @@ public class Main {
           Display.sync(config.getDisplayFps().get());
         }
         if (fpsCounter.update()) {
-          Display.setTitle(String.format("%s (%d FPS)", TITLE, fpsCounter.getFps()));
+          Display.setTitle(String.format("%s (%.2f FPS)", TITLE, fpsCounter.getFps()));
         }
       }
+
+      // say goodbye
+      final ByteBuffer packet = Channel.createPacketBuffer();
+      Protocol.writePacketHeader(packet, Protocol.PacketType.Goodbye);
+      packet.flip();
+      networkManager.sendPacketToServer(packet);
+      networkManager.disconnect();
     } catch (final IOException e) {
       e.printStackTrace();
     } catch (final LWJGLException e) {
       e.printStackTrace();
-      System.exit(0);
     } finally {
       Display.destroy();
     }
+    LOG.info("Client stopped");
   }
 }

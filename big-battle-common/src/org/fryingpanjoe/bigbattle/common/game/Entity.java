@@ -57,8 +57,8 @@ public class Entity {
   }
 
   public void setVelocity(final float velx, final float vely) {
-    this.velx = x;
-    this.vely = y;
+    this.velx = velx;
+    this.vely = vely;
     this.updateBits |= VELOCITY_BIT;
   }
 
