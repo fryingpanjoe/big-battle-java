@@ -17,7 +17,7 @@ public class EntityDefinitions {
     1.0f, // mass
     0.2f, // radius
     new Vector3f(0.2f, 0.5f, 0.2f), // size
-    1.5f, // speed
+    2.0f, // speed
     1.f); // rotation speed
 
   private static final Map<EntityDefinitionId, EntityDefinition> ALL = ImmutableMap.of(
