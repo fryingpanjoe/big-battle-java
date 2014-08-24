@@ -1,4 +1,4 @@
-package org.fryingpanjoe.bigbattle.client.io;
+package org.fryingpanjoe.bigbattle.common.io;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,17 +12,23 @@ public class Files {
   private static final int CHUNK_SIZE = 1024;
 
   public static InputStream getFileAsStream(final String filename) throws IOException {
-    final Path path = Paths.get(filename);
+    final Path path = Paths.get("bin/" + filename);
     if (java.nio.file.Files.exists(path)) {
       return java.nio.file.Files.newInputStream(path);
     } else {
-      return Files.class.getResourceAsStream(filename);
+      final InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
+        filename);
+      if (stream != null) {
+        return stream;
+      } else {
+        throw new IOException("File not found: " + filename);
+      }
     }
   }
 
   public static String getFileAsString(final String filename) throws IOException {
-    final BufferedReader reader = new BufferedReader(
-      new InputStreamReader(getFileAsStream(filename), "UTF-8"));
+    final InputStream stream = getFileAsStream(filename);
+    final BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
     try {
       final StringBuilder text = new StringBuilder();
       final char[] chunk = new char[CHUNK_SIZE];

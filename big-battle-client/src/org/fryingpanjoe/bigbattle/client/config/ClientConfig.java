@@ -8,7 +8,7 @@ import com.typesafe.config.ConfigFactory;
 
 public class ClientConfig {
 
-  private static String DEFAULT_CONFIG_NAME = "big-battle-client";
+  private static final String DEFAULT_CONFIG_NAME = "big-battle-client";
 
   private final int displayWidth;
   private final int displayHeight;

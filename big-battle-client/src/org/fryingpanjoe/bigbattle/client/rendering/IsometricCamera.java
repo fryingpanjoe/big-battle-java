@@ -7,32 +7,28 @@ import org.lwjgl.util.vector.Vector2f;
 public class IsometricCamera {
 
   private float scale;
-  private Vector2f pos;
+  private Vector2f position;
 
   public IsometricCamera() {
     this.scale = 6.f;
-    this.pos = new Vector2f(0.f, 0.f);
+    this.position = new Vector2f(0.f, 0.f);
   }
 
   public void setScale(final float scale) {
     this.scale = scale;
   }
 
-  public void setPos(final Vector2f pos) {
-    this.pos = pos;
-  }
-
-  public void setPos(final float x, final float y) {
-    this.pos.x = x;
-    this.pos.y = y;
+  public void setPosition(final float x, final float y) {
+    this.position.x = x;
+    this.position.y = y;
   }
 
   public float getScale() {
     return this.scale;
   }
 
-  public Vector2f getPos() {
-    return this.pos;
+  public Vector2f getPosition() {
+    return this.position;
   }
 
   public void setupGL() {
@@ -45,8 +41,8 @@ public class IsometricCamera {
     GL11.glMatrixMode(GL11.GL_MODELVIEW);
     GL11.glLoadIdentity();
     GLU.gluLookAt(
-      this.pos.x + 0.75f, 1.f, this.pos.y + 0.75f,
-      this.pos.x, 0.f, this.pos.y,
+      this.position.x + 0.75f, 1.f, this.position.y + 0.75f,
+      this.position.x, 0.f, this.position.y,
       0.f, 1.f, 0.f);
   }
 }
