@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
 
+import org.fryingpanjoe.bigbattle.common.Constants;
 import org.fryingpanjoe.bigbattle.common.terrain.TerrainGenerator;
 import org.fryingpanjoe.bigbattle.common.terrain.TerrainPatch;
 import org.fryingpanjoe.bigbattle.common.terrain.TerrainPatchLocation;
@@ -16,9 +17,6 @@ import org.json.JSONException;
 public class ClientTerrainManager {
 
   private static final Logger LOG = Logger.getLogger(ClientTerrainManager.class.getName());
-
-  private static final int PATCH_SIZE = 128;
-  private static final float TILE_WORLD_SIZE = 1.f;
 
   private static class TerrainPatchWithLocation {
 
@@ -52,7 +50,7 @@ public class ClientTerrainManager {
       LOG.warning(
         String.format("Failed to load patch %d,%d: %s", location.x, location.y, e.getMessage()));
       final TerrainPatch patch = TerrainGenerator.generateRandomPatch(
-        PATCH_SIZE, Arrays.asList(0), new Random());
+        Constants.AREA_SIZE_IN_TILES, Arrays.asList(0), new Random());
       this.patches.add(new TerrainPatchWithLocation(patch, location));
       return patch;
     }
@@ -60,7 +58,7 @@ public class ClientTerrainManager {
 
   private static TerrainPatchLocation getTerrainPatchLocationAt(final float x, final float y) {
     return new TerrainPatchLocation(
-      (int) (x / TILE_WORLD_SIZE) / PATCH_SIZE,
-      (int) (y / TILE_WORLD_SIZE) / PATCH_SIZE);
+      (int) (x / Constants.TILE_SIZE_IN_UNITS) / Constants.AREA_SIZE_IN_TILES,
+      (int) (y / Constants.TILE_SIZE_IN_UNITS) / Constants.AREA_SIZE_IN_TILES);
   }
 }
