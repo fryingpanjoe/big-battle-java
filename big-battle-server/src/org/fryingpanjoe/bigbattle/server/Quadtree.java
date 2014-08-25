@@ -70,7 +70,7 @@ public class Quadtree<T> {
         } else {
           if (this.children.isEmpty()) {
             for (final Bound childBound : this.bound.getChildBounds()) {
-              this.children.add(new Node<>(childBound));
+              this.children.add(new Node<T>(childBound));
             }
           }
           for (final Node<T> child : this.children) {
