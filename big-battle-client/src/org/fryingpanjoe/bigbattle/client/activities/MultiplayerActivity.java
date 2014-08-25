@@ -6,7 +6,6 @@ import java.nio.FloatBuffer;
 
 import org.fryingpanjoe.bigbattle.client.ClientEntityManager;
 import org.fryingpanjoe.bigbattle.client.ClientNetworkManager;
-import org.fryingpanjoe.bigbattle.client.ClientTerrainManager;
 import org.fryingpanjoe.bigbattle.client.Keybinding;
 import org.fryingpanjoe.bigbattle.client.UpdateRateTimer;
 import org.fryingpanjoe.bigbattle.client.game.ClientEntity;
@@ -25,7 +24,6 @@ public class MultiplayerActivity implements Activity {
   private final int entityId;
   private final ClientNetworkManager networkManager;
   private final ClientEntityManager entityManager;
-  private final ClientTerrainManager terrainManager;
   private final TerrainRenderer terrainRenderer;
   private final EntityRenderer entityRenderer;
   private final Keybinding keybinding;
@@ -38,7 +36,6 @@ public class MultiplayerActivity implements Activity {
                              final int entityId,
                              final ClientNetworkManager networkManager,
                              final ClientEntityManager entityManager,
-                             final ClientTerrainManager terrainManager,
                              final TerrainRenderer terrainRenderer,
                              final EntityRenderer entityRenderer,
                              final Keybinding keybinding) throws IOException {
@@ -46,7 +43,6 @@ public class MultiplayerActivity implements Activity {
     this.entityId = entityId;
     this.networkManager = networkManager;
     this.entityManager = entityManager;
-    this.terrainManager = terrainManager;
     this.terrainRenderer = terrainRenderer;
     this.entityRenderer = entityRenderer;
     this.keybinding = keybinding;
@@ -96,11 +92,7 @@ public class MultiplayerActivity implements Activity {
     GL11.glLight(GL11.GL_LIGHT0, GL11.GL_POSITION, positionBuffer);
 
     if (playerEntity != null) {
-      this.terrainRenderer.renderTerrainPatch(
-        this.camera,
-        this.terrainManager.getTerrainPatch(
-          playerEntity.getEntity().getX(),
-          playerEntity.getEntity().getY()));
+      this.terrainRenderer.renderTerrain(this.camera);
     }
 
     this.entityRenderer.renderEntities(

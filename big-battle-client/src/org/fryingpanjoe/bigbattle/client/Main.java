@@ -54,7 +54,7 @@ public class Main {
       final ClientEntityManager entityManager = new ClientEntityManager();
       eventBus.register(entityManager);
       final ClientTerrainManager terrainManager = new ClientTerrainManager();
-      final TerrainRenderer terrainRenderer = new TerrainRenderer();
+      final TerrainRenderer terrainRenderer = new TerrainRenderer(terrainManager);
       final EntityRenderer entityRenderer = new EntityRenderer();
       final Keybinding keybinding = new Keybinding();
       keybinding.bind(Keyboard.KEY_W, PlayerInput.Action.MovingNorth);
@@ -76,7 +76,6 @@ public class Main {
             event.entityId,
             networkManager,
             entityManager,
-            terrainManager,
             terrainRenderer,
             entityRenderer,
             keybinding);

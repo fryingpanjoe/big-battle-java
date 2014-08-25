@@ -2,21 +2,22 @@ package org.fryingpanjoe.bigbattle.client.rendering;
 
 import java.io.IOException;
 import java.nio.FloatBuffer;
+import java.util.Set;
 
+import org.fryingpanjoe.bigbattle.client.ClientTerrainManager;
 import org.fryingpanjoe.bigbattle.common.Constants;
 import org.fryingpanjoe.bigbattle.common.terrain.TerrainPatch;
+import org.fryingpanjoe.bigbattle.common.terrain.TerrainPatchLocation;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
-import org.lwjgl.util.vector.Vector2f;
 import org.newdawn.slick.opengl.Texture;
 
-public class TerrainRenderer {
+import com.google.common.collect.ImmutableSet;
 
-  private static final float SQRT_TWO = (float) Math.sqrt(2.f);
-  private static final float SQRT_TWO_OVER_TWO = SQRT_TWO * 0.5f;
+public class TerrainRenderer {
 
   private static final int ATLAS_TILE_SIZE = 8;
 
@@ -32,6 +33,7 @@ public class TerrainRenderer {
   private static final int VERTEX_OFFSET_UV = 3 * BYTES_PER_FLOAT;
   private static final int VERTEX_OFFSET_NORM = (3 + 2) * BYTES_PER_FLOAT;
 
+  private final ClientTerrainManager terrainManager;
   private final Texture atlas;
   private final int atlasTilesPerRow;
   private final float atlasTileSizeU;
@@ -42,7 +44,8 @@ public class TerrainRenderer {
   private final FloatBuffer vboBuffer;
   private final float[] vboBufferArray;
 
-  public TerrainRenderer() throws IOException {
+  public TerrainRenderer(final ClientTerrainManager terrainManager) throws IOException {
+    this.terrainManager = terrainManager;
     this.atlas = Textures.getTexture("terrain_atlas.png");
     this.atlasTilesPerRow = this.atlas.getImageWidth() / ATLAS_TILE_SIZE;
     this.atlasTileSizeU = (float)ATLAS_TILE_SIZE / (float)this.atlas.getImageWidth();
@@ -57,58 +60,56 @@ public class TerrainRenderer {
     GL15.glBufferData(GL15.GL_ARRAY_BUFFER, this.vboSize, GL15.GL_STREAM_DRAW);
   }
 
-  public void renderTerrainPatch(final IsometricCamera camera, final TerrainPatch patch) {
+  public void renderTerrain(final IsometricCamera camera) {
     final float d = camera.getScale();
     final float cx = camera.getPosition().x;
     final float cy = camera.getPosition().y;
-    final float minX = -d - 1.f;
-    final float maxX =  d + 1.f;
-    final float minY = -2.f * SQRT_TWO * d - 1.f;
-    final float maxY =  2.f * SQRT_TWO * d + 1.f;
-    final Vector2f tileBL = rot45(minX, maxY);
-    final Vector2f tileBR = rot45(maxX, maxY);
-    final Vector2f tileTL = rot45(minX, minY);
-    final Vector2f tileTR = rot45(maxX, minY);
-    final int tileMinX = Math.max(
-      0, (int)((cx + tileTL.x) / Constants.TILE_SIZE_IN_UNITS));
-    final int tileMaxX = Math.min(
-      patch.getSize(), (int)((cx + tileBR.x) / Constants.TILE_SIZE_IN_UNITS));
-    final int tileMinY = Math.max(
-      0, (int)((cy + tileTR.y) / Constants.TILE_SIZE_IN_UNITS));
-    final int tileMaxY = Math.min(
-      patch.getSize(), (int)((cy + tileBL.y) / Constants.TILE_SIZE_IN_UNITS));
-    final Vector2f tilePos = new Vector2f(0.f, 0.f);
+    // camera frustum projected on the ground
+    final float viewMinX = cx - d * 2f;
+    final float viewMaxX = cx + d * 2f;
+    final float viewMinY = cy - d * 2f;
+    final float viewMaxY = cy + d * 2f;
+    // find visible patches
+    final Set<TerrainPatchLocation> locations = ImmutableSet.of(
+      ClientTerrainManager.getTerrainPatchLocation(viewMinX, viewMinY),
+      ClientTerrainManager.getTerrainPatchLocation(viewMaxX, viewMinY),
+      ClientTerrainManager.getTerrainPatchLocation(viewMaxX, viewMaxY),
+      ClientTerrainManager.getTerrainPatchLocation(viewMinX, viewMaxY));
+    // vertex data
     final float[] vertData = this.vboBufferArray;
     int vertDataIndex = 0;
-    for (int y = tileMinY; y < tileMaxY; ++y) {
-      for (int x = tileMinX; x < tileMaxX; ++x) {
-        tilePos.x = (x * Constants.TILE_SIZE_IN_UNITS) - cx;
-        tilePos.y = -((y * Constants.TILE_SIZE_IN_UNITS) - cy);
-        rot45(tilePos);
-        if (tilePos.x < minX || tilePos.x > maxX || tilePos.y < minY || tilePos.y > maxY) {
-          continue;
-        }
-        final int tile = patch.getTiles()[x + y * patch.getSize()];
-        final int vertCount = 6; //StaticGeometry.CUBE_VERT_XYZ.length / 3;
-        for (int i = 0; i < vertCount; ++i) {
-          vertData[vertDataIndex++] =
-            StaticGeometries.CUBE_VERT_XYZ[(i * 3) + 0] + (float) x * Constants.TILE_SIZE_IN_UNITS;
-          vertData[vertDataIndex++] = 0.f;
-          vertData[vertDataIndex++] =
-            StaticGeometries.CUBE_VERT_XYZ[(i * 3) + 2] + (float) y * Constants.TILE_SIZE_IN_UNITS;
-          vertData[vertDataIndex++] =
-            (StaticGeometries.CUBE_VERT_UV[(i * 2) + 0] + (tile % this.atlasTilesPerRow)) *
-            this.atlasTileSizeU;
-          vertData[vertDataIndex++] =
-            (StaticGeometries.CUBE_VERT_UV[(i * 2) + 1] + (tile / this.atlasTilesPerRow)) *
-            this.atlasTileSizeV;
-          vertData[vertDataIndex++] = StaticGeometries.CUBE_VERT_NORM[(i * 3) + 0];
-          vertData[vertDataIndex++] = StaticGeometries.CUBE_VERT_NORM[(i * 3) + 1];
-          vertData[vertDataIndex++] = StaticGeometries.CUBE_VERT_NORM[(i * 3) + 2];
+    int vertCount = 0;
+    for (final TerrainPatchLocation location : locations) {
+      final TerrainPatch patch = this.terrainManager.getTerrainPatch(location);
+      final float patchMinX = location.x * Constants.AREA_SIZE_IN_UNITS;
+      final float patchMinY = location.y * Constants.AREA_SIZE_IN_UNITS;
+      for (int y = 0; y < patch.getSize(); ++y) {
+        for (int x = 0; x < patch.getSize(); ++x) {
+          final float tileX = patchMinX + x * Constants.TILE_SIZE_IN_UNITS;
+          final float tileY = patchMinY + y * Constants.TILE_SIZE_IN_UNITS;
+          if (tileX < viewMinX || tileX > viewMaxX || tileY < viewMinY || tileY > viewMaxY) {
+            continue;
+          }
+          final int tile = patch.getTiles()[x + y * patch.getSize()];
+          final int tileVertCount = 6; //StaticGeometries.CUBE_VERT_XYZ.length / 3;
+          for (int i = 0; i < tileVertCount; ++i) {
+            vertData[vertDataIndex++] = 0.5f + StaticGeometries.CUBE_VERT_XYZ[(i * 3) + 0] + tileX;
+            vertData[vertDataIndex++] = 0.f; //0.5f - StaticGeometries.CUBE_VERT_XYZ[(i * 3) + 1];
+            vertData[vertDataIndex++] = 0.5f + StaticGeometries.CUBE_VERT_XYZ[(i * 3) + 2] + tileY;
+            vertData[vertDataIndex++] =
+              (StaticGeometries.CUBE_VERT_UV[(i * 2) + 0] + (tile % this.atlasTilesPerRow)) *
+              this.atlasTileSizeU;
+            vertData[vertDataIndex++] =
+              (StaticGeometries.CUBE_VERT_UV[(i * 2) + 1] + (tile / this.atlasTilesPerRow)) *
+              this.atlasTileSizeV;
+            vertData[vertDataIndex++] = StaticGeometries.CUBE_VERT_NORM[(i * 3) + 0];
+            vertData[vertDataIndex++] = StaticGeometries.CUBE_VERT_NORM[(i * 3) + 1];
+            vertData[vertDataIndex++] = StaticGeometries.CUBE_VERT_NORM[(i * 3) + 2];
+            ++vertCount;
+          }
         }
       }
     }
-    //System.out.println(String.format("Rendering tiles %d,%d to %d,%d with %d vertices", tileMinX, tileMinY, tileMaxX, tileMaxY, vertDataIndex));
     GL13.glActiveTexture(GL13.GL_TEXTURE0);
     GL11.glEnable(GL11.GL_TEXTURE_2D);
     GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.atlas.getTextureID());
@@ -136,7 +137,7 @@ public class TerrainRenderer {
     GL20.glUseProgram(this.shader);
     //GL20.glUniform1i(GL20.glGetUniformLocation(this.shader, "tex"), 0);
 
-    GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, vertDataIndex);
+    GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, vertCount);
 
     GL20.glUseProgram(0);
 
@@ -147,18 +148,5 @@ public class TerrainRenderer {
 
     GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
     GL11.glDisable(GL11.GL_TEXTURE_2D);
-  }
-
-  private static Vector2f rot45(final float x, final float y) {
-    final Vector2f v = new Vector2f(x, y);
-    rot45(v);
-    return v;
-  }
-
-  private static void rot45(final Vector2f v) {
-    final float x = v.x;
-    final float y = v.y;
-    v.x = (x + y) * SQRT_TWO_OVER_TWO;
-    v.y = (y - x) * SQRT_TWO_OVER_TWO;
   }
 }
