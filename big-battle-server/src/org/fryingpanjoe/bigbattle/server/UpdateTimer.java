@@ -18,10 +18,11 @@ public class UpdateTimer {
 
   public long getTimeUntilUpdate() {
     final long now = Sys.getTime();
-    final long timeUntilUpdate = Math.max(0, this.updateInterval - this.updateTime - now);
+    final long timeSinceUpdated = now - this.updateTime;
+    final long timeUntilUpdate = Math.max(0, this.updateInterval - timeSinceUpdated);
     if (timeUntilUpdate == 0) {
       this.updateTime = now;
     }
-    return Math.max(0, timeUntilUpdate);
+    return timeUntilUpdate;
   }
 }
