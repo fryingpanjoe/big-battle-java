@@ -19,6 +19,7 @@ import org.fryingpanjoe.bigbattle.common.game.PlayerInput;
 import org.fryingpanjoe.bigbattle.common.networking.Channel;
 import org.fryingpanjoe.bigbattle.common.networking.Protocol;
 import org.lwjgl.LWJGLException;
+import org.lwjgl.Sys;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
@@ -107,6 +108,8 @@ public class Main {
 
       final FpsCounter fpsCounter = new FpsCounter();
 
+      long lastUpdateTime = Sys.getTime();
+
       while (!Display.isCloseRequested()) {
         networkManager.receivePacketFromServer();
         if (!activityStack.isEmpty()) {
@@ -131,7 +134,11 @@ public class Main {
               mouseWheel = Mouse.getEventDWheel();
             }
           }
-          if (!activity.update()) {
+          final long now = Sys.getTime();
+          final long timeSinceLastUpdate = now - lastUpdateTime;
+          lastUpdateTime = now;
+          final float deltaTime = (float) timeSinceLastUpdate / 1000.f;
+          if (!activity.update(deltaTime)) {
             break;
           }
           activity.draw();

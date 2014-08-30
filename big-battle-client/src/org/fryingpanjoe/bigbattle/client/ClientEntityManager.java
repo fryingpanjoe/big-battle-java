@@ -20,6 +20,16 @@ public class ClientEntityManager {
     this.renderEntities = new HashMap<>();
   }
 
+  public void updatePositions(final float dt) {
+    for (final ClientEntity entity : this.entities.values()) {
+      final float x = entity.getEntity().getX() + entity.getEntity().getVelocityX() * dt;
+      final float y = entity.getEntity().getY() + entity.getEntity().getVelocityY() * dt;
+      if (x != entity.getEntity().getX() || y != entity.getEntity().getY()) {
+        entity.getEntity().setPosition(x, y);
+      }
+    }
+  }
+
   public Map<Integer, ClientEntity> getEntities() {
     return this.entities;
   }

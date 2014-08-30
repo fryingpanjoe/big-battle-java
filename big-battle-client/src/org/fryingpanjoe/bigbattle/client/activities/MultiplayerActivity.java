@@ -53,7 +53,8 @@ public class MultiplayerActivity implements Activity {
   }
 
   @Override
-  public boolean update() {
+  public boolean update(final float deltaTime) {
+    this.entityManager.updatePositions(deltaTime);
     if (this.inputRate.shouldUpdate()) {
       final ByteBuffer packet = Channel.createPacketBuffer();
       Protocol.writePacketHeader(packet, Protocol.PacketType.PlayerInput);
