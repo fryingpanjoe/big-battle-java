@@ -18,8 +18,8 @@ public class UpdateRateTimer {
 
   public boolean shouldUpdate() {
     final long now = Sys.getTime();
-    final long timeUntilUpdate = Math.max(0, this.interval - this.time - now);
-    if (timeUntilUpdate == 0) {
+    final long timeSinceUpdate = now - this.time;
+    if (timeSinceUpdate >= this.interval) {
       this.time = now;
       return true;
     } else {
