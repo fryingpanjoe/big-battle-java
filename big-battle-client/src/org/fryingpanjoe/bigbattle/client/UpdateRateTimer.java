@@ -5,7 +5,7 @@ import org.lwjgl.Sys;
 public class UpdateRateTimer {
 
   public static UpdateRateTimer fromFps(final float fps) {
-    return new UpdateRateTimer((long) (1.f / fps));
+    return new UpdateRateTimer((long) (1000.f / fps));
   }
 
   private final long interval;
