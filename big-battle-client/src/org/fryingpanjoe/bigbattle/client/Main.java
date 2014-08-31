@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.FileHandler;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 import org.fryingpanjoe.bigbattle.client.activities.Activity;
 import org.fryingpanjoe.bigbattle.client.activities.MultiplayerActivity;
@@ -33,7 +35,10 @@ public class Main {
 
   private static final String TITLE = "Big Battle Client";
 
-  public static void main(final String[] argv) {
+  public static void main(final String[] argv) throws SecurityException, IOException {
+    final FileHandler handler = new FileHandler("client.log");
+    handler.setFormatter(new SimpleFormatter());
+    Logger.getLogger("").addHandler(handler);
     try {
       LOG.info("Client starting");
 
