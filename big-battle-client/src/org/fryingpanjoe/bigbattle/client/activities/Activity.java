@@ -2,7 +2,7 @@ package org.fryingpanjoe.bigbattle.client.activities;
 
 public interface Activity {
 
-  boolean update();
+  boolean update(final float deltaTime);
 
   void draw();
 
