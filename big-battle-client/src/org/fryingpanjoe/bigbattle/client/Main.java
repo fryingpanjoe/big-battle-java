@@ -106,7 +106,20 @@ public class Main {
       };
       eventBus.register(eventHandler);
 
-      networkManager.connect("localhost", 12345);
+      final String host;
+      if (argv.length > 0) {
+        host = argv[0];
+      } else {
+        host = "localhost";
+      }
+      final int port;
+      if (argv.length > 1) {
+        port = Integer.parseInt(argv[1]);
+      } else {
+        port = 12345;
+      }
+      LOG.info("Connecting to " + host + ":" + port);
+      networkManager.connect(host, port);
 
       int mouseWheel = 0;
 
