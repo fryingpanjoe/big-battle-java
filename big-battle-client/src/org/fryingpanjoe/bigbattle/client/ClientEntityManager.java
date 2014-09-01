@@ -22,11 +22,9 @@ public class ClientEntityManager {
 
   public void updatePositions(final float dt) {
     for (final ClientEntity entity : this.entities.values()) {
-      final float x = entity.getEntity().getX() + entity.getEntity().getVelocityX() * dt;
-      final float y = entity.getEntity().getY() + entity.getEntity().getVelocityY() * dt;
-      if (x != entity.getEntity().getX() || y != entity.getEntity().getY()) {
-        entity.getEntity().setPosition(x, y);
-      }
+      entity.getEntity().setPosition(
+        entity.getEntity().getX() + entity.getEntity().getVelocityX() * dt,
+        entity.getEntity().getY() + entity.getEntity().getVelocityY() * dt);
     }
   }
 
