@@ -13,6 +13,7 @@ import org.fryingpanjoe.bigbattle.client.rendering.EntityRenderer;
 import org.fryingpanjoe.bigbattle.client.rendering.IsometricCamera;
 import org.fryingpanjoe.bigbattle.client.rendering.TerrainRenderer;
 import org.fryingpanjoe.bigbattle.common.game.PlayerInput;
+import org.fryingpanjoe.bigbattle.common.game.PlayerInputController;
 import org.fryingpanjoe.bigbattle.common.networking.Channel;
 import org.fryingpanjoe.bigbattle.common.networking.Protocol;
 import org.lwjgl.BufferUtils;
@@ -54,6 +55,10 @@ public class MultiplayerActivity implements Activity {
 
   @Override
   public boolean update(final float deltaTime) {
+    final ClientEntity playerEntity = this.entityManager.getEntities().get(this.entityId);
+    if (playerEntity != null) {
+      PlayerInputController.respondToPlayerInput(playerEntity.getEntity(), this.playerInput);
+    }
     this.entityManager.updatePositions(deltaTime);
     if (this.inputRate.shouldUpdate()) {
       final ByteBuffer packet = Channel.createPacketBuffer();
