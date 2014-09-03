@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
@@ -64,12 +65,11 @@ public class Main {
       final TerrainRenderer terrainRenderer = new TerrainRenderer(terrainManager);
       final EntityRenderer entityRenderer = new EntityRenderer();
       final Keybinding keybinding = new Keybinding();
-      keybinding.bind(Keyboard.KEY_W, PlayerInput.Action.MovingNorth);
-      keybinding.bind(Keyboard.KEY_S, PlayerInput.Action.MovingSouth);
-      keybinding.bind(Keyboard.KEY_A, PlayerInput.Action.MovingWest);
-      keybinding.bind(Keyboard.KEY_D, PlayerInput.Action.MovingEast);
-      keybinding.bind(Keyboard.KEY_LSHIFT, PlayerInput.Action.Running);
-      keybinding.bind(Keybinding.MOUSE1, PlayerInput.Action.Attacking);
+      for (final Map.Entry<String, String> bind : config.getBindings().entrySet()) {
+        keybinding.bind(
+          Keybinding.getKeyForName(bind.getKey()),
+          PlayerInput.Action.valueOf(bind.getValue()));
+      }
 
       final List<Activity> activityStack = new LinkedList<>();
 
@@ -166,7 +166,7 @@ public class Main {
             }
             if (Mouse.getEventDWheel() != mouseWheel) {
               final int key = Mouse.getEventDWheel() < 0 ?
-                Keybinding.MOUSE_WHEELDOWN : Keybinding.MOUSE_WHEELUP;
+                Keybinding.MWHEELDOWN : Keybinding.MWHEELUP;
               if (Mouse.getEventDWheel() == 0) {
                 activity.key(key, '\0', true);
               } else {

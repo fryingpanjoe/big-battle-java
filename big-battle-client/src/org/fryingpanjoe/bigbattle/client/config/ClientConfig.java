@@ -2,7 +2,12 @@ package org.fryingpanjoe.bigbattle.client.config;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Collections;
+import java.util.Map;
+
+import com.google.common.base.Functions;
 import com.google.common.base.Optional;
+import com.google.common.collect.Maps;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
@@ -15,6 +20,7 @@ public class ClientConfig {
   private final boolean displayFullscreen;
   private final boolean displayVsync;
   private final Optional<Integer> displayFps;
+  private final Map<String, String> bindings;
 
   public ClientConfig() {
     this(DEFAULT_CONFIG_NAME);
@@ -34,6 +40,12 @@ public class ClientConfig {
       this.displayFps = Optional.of(clientConfig.getInt("display.fps"));
     } else {
       this.displayFps = Optional.absent();
+    }
+    if (clientConfig.hasPath("input.bind")) {
+      this.bindings = Maps.transformValues(
+        clientConfig.getObject("input.bind").unwrapped(), Functions.toStringFunction());
+    } else {
+      this.bindings = Collections.emptyMap();
     }
   }
 
@@ -55,5 +67,9 @@ public class ClientConfig {
 
   public Optional<Integer> getDisplayFps() {
     return this.displayFps;
+  }
+
+  public Map<String, String> getBindings() {
+    return this.bindings;
   }
 }
