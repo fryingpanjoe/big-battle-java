@@ -132,6 +132,7 @@ public class ServerNetworkManager {
           LOG.info("Client disconnected: " + client.getId());
           clientIterator.remove();
           this.eventBus.post(new ClientDisconnectedEvent(client.getId()));
+          break;
         }
       }
       clientIdIterator.remove();
