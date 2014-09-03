@@ -11,7 +11,7 @@ import org.fryingpanjoe.bigbattle.common.networking.Protocol;
 import org.fryingpanjoe.bigbattle.server.config.ServerConfig;
 import org.fryingpanjoe.bigbattle.server.events.ClientConnectedEvent;
 import org.fryingpanjoe.bigbattle.server.events.ClientDisconnectedEvent;
-import org.fryingpanjoe.bigbattle.server.events.ServerPlayerInputEvent;
+import org.fryingpanjoe.bigbattle.server.events.ReceivedPacketFromClientEvent;
 import org.fryingpanjoe.bigbattle.server.game.ServerEntity;
 import org.fryingpanjoe.bigbattle.server.game.ServerPlayer;
 import org.lwjgl.Sys;
@@ -38,6 +38,32 @@ public class Main {
     final Object eventHandler = new Object() {
 
       @Subscribe
+      public void onReceivedPacketFromClientEvent(final ReceivedPacketFromClientEvent event) {
+        final ByteBuffer data = ByteBuffer.wrap(event.packet.getData());
+        final Protocol.PacketType packetType = Protocol.readPacketHeader(data);
+        switch (packetType) {
+          case PlayerInput: {
+            final ServerPlayer player = playerManager.getPlayerByClientId(event.clientId);
+            player.setPlayerInput(Protocol.readPlayerInput(data));
+          } break;
+
+          case EntityDelta: {
+            final ServerPlayer player = playerManager.getPlayerByClientId(event.clientId);
+            if (player != null) {
+              Protocol.readEntityDelta(data, player.getServerEntity().getEntity());
+            }
+          } break;
+
+          case Goodbye: {
+            networkManager.disconnectClient(event.clientId);
+          } break;
+
+          default:
+            break;
+        }
+      }
+
+      @Subscribe
       public void onClientConnectedEvent(final ClientConnectedEvent event) {
         LOG.info("Client " + event.clientId + " connected, sending enter game");
         // TODO find valid spawn location
@@ -55,12 +81,6 @@ public class Main {
       @Subscribe
       public void onClientDisconnectedEvent(final ClientDisconnectedEvent event) {
         spawner.killClientPlayer(event.clientId);
-      }
-
-      @Subscribe
-      public void onServerPlayerInputEvent(final ServerPlayerInputEvent event) {
-        final ServerPlayer player = playerManager.getPlayerByClientId(event.clientId);
-        player.setPlayerInput(event.playerInput);
       }
     };
     eventBus.register(eventHandler);
@@ -82,6 +102,7 @@ public class Main {
       // get updates from client
       networkManager.receivePacketsFromClients();
       networkManager.checkTimeouts();
+      networkManager.removeDisconnectedClients();
 
       // update world
       final long now = Sys.getTime();

@@ -17,9 +17,9 @@ import org.fryingpanjoe.bigbattle.common.networking.Packet;
 import org.fryingpanjoe.bigbattle.common.networking.Protocol;
 import org.fryingpanjoe.bigbattle.server.events.ClientConnectedEvent;
 import org.fryingpanjoe.bigbattle.server.events.ClientDisconnectedEvent;
+import org.fryingpanjoe.bigbattle.server.events.ReceivedPacketFromClientEvent;
 import org.fryingpanjoe.bigbattle.server.events.ServerOfflineEvent;
 import org.fryingpanjoe.bigbattle.server.events.ServerOnlineEvent;
-import org.fryingpanjoe.bigbattle.server.events.ServerPlayerInputEvent;
 import org.lwjgl.Sys;
 
 import com.google.common.eventbus.EventBus;
@@ -68,12 +68,14 @@ public class ServerNetworkManager {
 
   private final EventBus eventBus;
   private final List<Client> clients;
+  private final List<Integer> disconnectedClients;
   private DatagramChannel socket;
   private int clientIdGenerator;
 
   public ServerNetworkManager(final EventBus eventBus) {
     this.eventBus = eventBus;
     this.clients = new ArrayList<>();
+    this.disconnectedClients = new ArrayList<>();
     this.socket = null;
     this.clientIdGenerator = 1;
   }
@@ -103,6 +105,10 @@ public class ServerNetworkManager {
     }
   }
 
+  public void disconnectClient(final int clientId) {
+    this.disconnectedClients.add(clientId);
+  }
+
   public void checkTimeouts() {
     final Iterator<Client> clientIterator = this.clients.iterator();
     while (clientIterator.hasNext()) {
@@ -112,6 +118,23 @@ public class ServerNetworkManager {
         clientIterator.remove();
         this.eventBus.post(new ClientDisconnectedEvent(client.getId()));
       }
+    }
+  }
+
+  public void removeDisconnectedClients() {
+    final Iterator<Integer> clientIdIterator = this.disconnectedClients.iterator();
+    while (clientIdIterator.hasNext()) {
+      final int clientId = clientIdIterator.next();
+      final Iterator<Client> clientIterator = this.clients.iterator();
+      while (clientIterator.hasNext()) {
+        final Client client = clientIterator.next();
+        if (client.getId() == clientId) {
+          LOG.info("Client disconnected: " + client.getId());
+          clientIterator.remove();
+          this.eventBus.post(new ClientDisconnectedEvent(client.getId()));
+        }
+      }
+      clientIdIterator.remove();
     }
   }
 
@@ -131,11 +154,7 @@ public class ServerNetworkManager {
               final Packet packet = client.getChannel().onDataReceived(receivedData);
               if (packet != null) {
                 client.resetTimeout();
-                if (!onPacketReceivedFromClient(client.getId(), packet)) {
-                  LOG.info("Client disconnected: " + client.getId());
-                  clientIterator.remove();
-                  this.eventBus.post(new ClientDisconnectedEvent(client.getId()));
-                }
+                this.eventBus.post(new ReceivedPacketFromClientEvent(client.getId(), packet));
               }
               break;
             }
@@ -195,23 +214,6 @@ public class ServerNetworkManager {
         this.eventBus.post(new ClientDisconnectedEvent(client.getId()));
       }
     }
-  }
-
-  private boolean onPacketReceivedFromClient(final int clientId, final Packet packet) {
-    final ByteBuffer data = ByteBuffer.wrap(packet.getData());
-    final Protocol.PacketType packetType = Protocol.readPacketHeader(data);
-    switch (packetType) {
-      case PlayerInput:
-        this.eventBus.post(new ServerPlayerInputEvent(clientId, Protocol.readPlayerInput(data)));
-        break;
-
-      case Goodbye:
-        return false;
-
-      default:
-        break;
-    }
-    return true;
   }
 
   private int getNextClientId() {

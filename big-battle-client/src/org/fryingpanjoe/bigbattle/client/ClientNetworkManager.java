@@ -9,9 +9,9 @@ import java.util.logging.Logger;
 
 import org.fryingpanjoe.bigbattle.client.events.ConnectedEvent;
 import org.fryingpanjoe.bigbattle.client.events.DisconnectedEvent;
+import org.fryingpanjoe.bigbattle.client.events.ReceivedPacketFromServerEvent;
 import org.fryingpanjoe.bigbattle.common.networking.Channel;
 import org.fryingpanjoe.bigbattle.common.networking.Packet;
-import org.fryingpanjoe.bigbattle.common.networking.Protocol;
 
 import com.google.common.eventbus.EventBus;
 
@@ -52,7 +52,7 @@ public class ClientNetworkManager {
       try {
         final Packet packet = this.channel.receivePacket();
         if (packet != null) {
-          onPacketReceivedFromServer(packet);
+          this.eventBus.post(new ReceivedPacketFromServerEvent(packet));
         }
       } catch (final IOException e) {
         LOG.warning("Failed to receive packet from server: " + e.getMessage());
@@ -69,27 +69,6 @@ public class ClientNetworkManager {
         LOG.warning("Failed to send packet to server: " + e.getMessage());
         disconnect();
       }
-    }
-  }
-
-  private void onPacketReceivedFromServer(final Packet packet) {
-    final ByteBuffer data = ByteBuffer.wrap(packet.getData());
-    final Protocol.PacketType packetType = Protocol.readPacketHeader(data);
-    switch (packetType) {
-      case EnterGameEvent:
-        this.eventBus.post(Protocol.readEnterGameEvent(data));
-        break;
-
-      case EntityNoticedEvent:
-        this.eventBus.post(Protocol.readEntityNoticedEvent(data));
-        break;
-
-      case EntityLostEvent:
-        this.eventBus.post(Protocol.readEntityLostEvent(data));
-        break;
-
-      default:
-        LOG.info("Ignoring packet: " + packetType);
     }
   }
 }

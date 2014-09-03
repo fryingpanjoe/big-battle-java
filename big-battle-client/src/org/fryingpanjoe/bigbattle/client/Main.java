@@ -13,6 +13,7 @@ import org.fryingpanjoe.bigbattle.client.activities.MultiplayerActivity;
 import org.fryingpanjoe.bigbattle.client.config.ClientConfig;
 import org.fryingpanjoe.bigbattle.client.events.ConnectedEvent;
 import org.fryingpanjoe.bigbattle.client.events.DisconnectedEvent;
+import org.fryingpanjoe.bigbattle.client.events.ReceivedPacketFromServerEvent;
 import org.fryingpanjoe.bigbattle.client.rendering.Defaults;
 import org.fryingpanjoe.bigbattle.client.rendering.EntityRenderer;
 import org.fryingpanjoe.bigbattle.client.rendering.TerrainRenderer;
@@ -75,6 +76,28 @@ public class Main {
       final Object eventHandler = new Object() {
 
         @Subscribe
+        public void onRecievedPacketFromServerEvent(final ReceivedPacketFromServerEvent event)
+            throws IOException {
+          final ByteBuffer data = ByteBuffer.wrap(event.packet.getData());
+          final Protocol.PacketType packetType = Protocol.readPacketHeader(data);
+          switch (packetType) {
+            case EnterGameEvent:
+              onEnterGameEvent(Protocol.readEnterGameEvent(data));
+              break;
+
+            case EntityNoticedEvent:
+              eventBus.post(Protocol.readEntityNoticedEvent(data));
+              break;
+
+            case EntityLostEvent:
+              eventBus.post(Protocol.readEntityLostEvent(data));
+              break;
+
+            default:
+              LOG.info("Ignoring packet: " + packetType);
+          }
+        }
+
         public void onEnterGameEvent(final EnterGameEvent event) throws IOException {
           LOG.info("Entering game");
           final Activity activity = new MultiplayerActivity(
