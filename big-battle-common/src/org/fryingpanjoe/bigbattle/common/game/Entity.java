@@ -9,6 +9,7 @@ public class Entity {
     Velocity,
     Rotation,
     State,
+    Health,
   }
 
   public enum State {
@@ -28,6 +29,7 @@ public class Entity {
   private float vely;
   private float rotation;
   private State state;
+  private float health;
 
   public Entity(final int id,
                 final EntityDefinition def,
@@ -36,7 +38,8 @@ public class Entity {
                 final float velx,
                 final float vely,
                 final float rotation,
-                final State state) {
+                final State state,
+                final float health) {
     this.id = id;
     this.def = def;
     this.updateFlags = EnumSet.noneOf(UpdateFlag.class);
@@ -46,6 +49,7 @@ public class Entity {
     this.vely = vely;
     this.rotation = rotation;
     this.state = state;
+    this.health = health;
   }
 
   public void setPosition(final float x, final float y) {
@@ -68,6 +72,11 @@ public class Entity {
   public void setState(final State state) {
     this.state = state;
     this.updateFlags.add(UpdateFlag.State);
+  }
+
+  public void setHealth(final float health) {
+    this.health = health;
+    this.updateFlags.add(UpdateFlag.Health);
   }
 
   public int getId() {
@@ -104,5 +113,9 @@ public class Entity {
 
   public State getState() {
     return this.state;
+  }
+
+  public float getHealth() {
+    return this.health;
   }
 }

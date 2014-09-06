@@ -18,7 +18,9 @@ public class EntityDefinitions {
     0.2f, // radius
     new Vector3f(0.2f, 0.5f, 0.2f), // size
     2.0f, // speed
-    1.f); // rotation speed
+    1.f, // rotation speed
+    100.f // health
+    );
 
   private static final Map<EntityDefinitionId, EntityDefinition> ALL = ImmutableMap.of(
     EntityDefinitionId.Player, PLAYER);

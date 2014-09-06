@@ -71,6 +71,9 @@ public class Protocol {
     if (entity.getUpdateFlags().contains(Entity.UpdateFlag.State)) {
       packet.put((byte) entity.getState().ordinal());
     }
+    if (entity.getUpdateFlags().contains(Entity.UpdateFlag.Health)) {
+      packet.putFloat(entity.getHealth());
+    }
   }
 
   public static void readEntityDelta(final ByteBuffer packet,
@@ -93,6 +96,9 @@ public class Protocol {
       // TODO add error handling
       entity.setState(Entity.State.values()[packet.get()]);
     }
+    if (flags.contains(Entity.UpdateFlag.Health)) {
+      entity.setHealth(packet.getFloat());
+    }
     entity.getUpdateFlags().clear();
   }
 
@@ -106,6 +112,7 @@ public class Protocol {
     packet.putFloat(entity.getVelocityY());
     packet.putFloat(entity.getRotation());
     packet.put((byte) entity.getState().ordinal());
+    packet.putFloat(entity.getHealth());
   }
 
   public static Entity readEntity(final ByteBuffer packet) {
@@ -117,7 +124,8 @@ public class Protocol {
     final float velY = packet.getFloat();
     final float rotation = packet.getFloat();
     final State state = Entity.State.values()[packet.get()];
-    return new Entity(id, def, posX, posY, velX, velY, rotation, state);
+    final float health = packet.getFloat();
+    return new Entity(id, def, posX, posY, velX, velY, rotation, state, health);
   }
 
   public static void writePlayerInput(final ByteBuffer packet,
