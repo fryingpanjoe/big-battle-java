@@ -27,7 +27,7 @@ public class ServerSpawner {
 
   public ServerPlayer spawnClientPlayer(final int clientId, final float x, final float y) {
     final Entity entity = new Entity(
-      getNextEntityId(), EntityDefinitions.PLAYER, x, y, 0.f, 0.f, 0.f);
+      getNextEntityId(), EntityDefinitions.PLAYER, x, y, 0.f, 0.f, 0.f, Entity.State.Idle);
     final ServerEntity serverEntity = new ServerEntity(entity);
     final Player player = new Player(clientId, serverEntity.getEntity().getId());
     final ServerNotice notice = new ServerNotice(serverEntity, PLAYER_NOTICE_RADIUS);

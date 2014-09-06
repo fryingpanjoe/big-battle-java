@@ -7,6 +7,7 @@ import org.fryingpanjoe.bigbattle.common.events.EnterGameEvent;
 import org.fryingpanjoe.bigbattle.common.events.EntityLostEvent;
 import org.fryingpanjoe.bigbattle.common.events.EntityNoticedEvent;
 import org.fryingpanjoe.bigbattle.common.game.Entity;
+import org.fryingpanjoe.bigbattle.common.game.Entity.State;
 import org.fryingpanjoe.bigbattle.common.game.Entity.UpdateFlag;
 import org.fryingpanjoe.bigbattle.common.game.EntityDefinition;
 import org.fryingpanjoe.bigbattle.common.game.EntityDefinitions;
@@ -67,6 +68,9 @@ public class Protocol {
     if (entity.getUpdateFlags().contains(Entity.UpdateFlag.Rotation)) {
       packet.putFloat(entity.getRotation());
     }
+    if (entity.getUpdateFlags().contains(Entity.UpdateFlag.State)) {
+      packet.put((byte) entity.getState().ordinal());
+    }
   }
 
   public static void readEntityDelta(final ByteBuffer packet,
@@ -85,6 +89,10 @@ public class Protocol {
     if (flags.contains(Entity.UpdateFlag.Rotation)) {
       entity.setRotation(packet.getFloat());
     }
+    if (flags.contains(Entity.UpdateFlag.State)) {
+      // TODO add error handling
+      entity.setState(Entity.State.values()[packet.get()]);
+    }
     entity.getUpdateFlags().clear();
   }
 
@@ -97,6 +105,7 @@ public class Protocol {
     packet.putFloat(entity.getVelocityX());
     packet.putFloat(entity.getVelocityY());
     packet.putFloat(entity.getRotation());
+    packet.put((byte) entity.getState().ordinal());
   }
 
   public static Entity readEntity(final ByteBuffer packet) {
@@ -107,7 +116,8 @@ public class Protocol {
     final float velX = packet.getFloat();
     final float velY = packet.getFloat();
     final float rotation = packet.getFloat();
-    return new Entity(id, def, posX, posY, velX, velY, rotation);
+    final State state = Entity.State.values()[packet.get()];
+    return new Entity(id, def, posX, posY, velX, velY, rotation, state);
   }
 
   public static void writePlayerInput(final ByteBuffer packet,
