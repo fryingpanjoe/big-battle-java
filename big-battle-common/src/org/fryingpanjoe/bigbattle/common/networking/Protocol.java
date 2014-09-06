@@ -7,6 +7,7 @@ import org.fryingpanjoe.bigbattle.common.events.EnterGameEvent;
 import org.fryingpanjoe.bigbattle.common.events.EntityLostEvent;
 import org.fryingpanjoe.bigbattle.common.events.EntityNoticedEvent;
 import org.fryingpanjoe.bigbattle.common.game.Entity;
+import org.fryingpanjoe.bigbattle.common.game.Entity.UpdateFlag;
 import org.fryingpanjoe.bigbattle.common.game.EntityDefinition;
 import org.fryingpanjoe.bigbattle.common.game.EntityDefinitions;
 import org.fryingpanjoe.bigbattle.common.game.PlayerInput;
@@ -54,38 +55,37 @@ public class Protocol {
 
   public static void writeEntityDelta(final ByteBuffer packet,
                                       final Entity entity) {
-    final byte bits = entity.getUpdateBits();
-    packet.put(bits);
-    if ((bits & Entity.POSITION_BIT) != 0) {
+    packet.put(entityUpdateFlagsToBits(entity.getUpdateFlags()));
+    if (entity.getUpdateFlags().contains(Entity.UpdateFlag.Position)) {
       packet.putFloat(entity.getX());
       packet.putFloat(entity.getY());
     }
-    if ((bits & Entity.VELOCITY_BIT) != 0) {
+    if (entity.getUpdateFlags().contains(Entity.UpdateFlag.Velocity)) {
       packet.putFloat(entity.getVelocityX());
       packet.putFloat(entity.getVelocityY());
     }
-    if ((bits & Entity.ROTATION_BIT) != 0) {
+    if (entity.getUpdateFlags().contains(Entity.UpdateFlag.Rotation)) {
       packet.putFloat(entity.getRotation());
     }
   }
 
   public static void readEntityDelta(final ByteBuffer packet,
                                      final Entity entity) {
-    final byte bits = packet.get();
-    if ((bits & Entity.POSITION_BIT) != 0) {
+    final EnumSet<Entity.UpdateFlag> flags = entityUpdateFlagsFromBits(packet.get());
+    if (flags.contains(Entity.UpdateFlag.Position)) {
       final float x = packet.getFloat();
       final float y = packet.getFloat();
       entity.setPosition(x, y);
     }
-    if ((bits & Entity.VELOCITY_BIT) != 0) {
+    if (flags.contains(Entity.UpdateFlag.Velocity)) {
       final float x = packet.getFloat();
       final float y = packet.getFloat();
       entity.setVelocity(x, y);
     }
-    if ((bits & Entity.ROTATION_BIT) != 0) {
+    if (flags.contains(Entity.UpdateFlag.Rotation)) {
       entity.setRotation(packet.getFloat());
     }
-    entity.resetUpdateBits(bits);
+    entity.getUpdateFlags().clear();
   }
 
   public static void writeEntity(final ByteBuffer packet,
@@ -112,12 +112,12 @@ public class Protocol {
 
   public static void writePlayerInput(final ByteBuffer packet,
                                       final PlayerInput playerInput) {
-    packet.putInt(playerInputActionsToInteger(playerInput.getActions()));
+    packet.put(playerInputActionsToBits(playerInput.getActions()));
     packet.putFloat(playerInput.getRotation());
   }
 
   public static PlayerInput readPlayerInput(final ByteBuffer packet) {
-    final EnumSet<Action> actions = playerInputActionsFromInteger(packet.getInt());
+    final EnumSet<Action> actions = playerInputActionsFromBits(packet.get());
     final float rotation = packet.getFloat();
     return new PlayerInput(actions, rotation);
   }
@@ -141,21 +141,43 @@ public class Protocol {
     return new EntityLostEvent(entityId);
   }
 
-  private static int playerInputActionsToInteger(final EnumSet<Action> actions) {
-    int flags = 0;
+  private static byte playerInputActionsToBits(final EnumSet<Action> actions) {
+    byte bits = 0;
     for (final Action action : actions) {
-      flags |= (1 << action.ordinal());
+      assert action.ordinal() < 8;
+      bits |= (1 << action.ordinal());
     }
-    return flags;
+    return bits;
   }
 
-  private static EnumSet<Action> playerInputActionsFromInteger(final int flags) {
+  private static EnumSet<Action> playerInputActionsFromBits(final byte bits) {
     final EnumSet<Action> actions = EnumSet.noneOf(Action.class);
     for (final Action action : Action.values()) {
-      if ((flags & (1 << action.ordinal())) != 0) {
+      assert action.ordinal() < 8;
+      if ((bits & (1 << action.ordinal())) != 0) {
         actions.add(action);
       }
     }
     return actions;
+  }
+
+  private static EnumSet<UpdateFlag> entityUpdateFlagsFromBits(final byte bits) {
+    final EnumSet<UpdateFlag> flags = EnumSet.noneOf(UpdateFlag.class);
+    for (final UpdateFlag flag : UpdateFlag.values()) {
+      assert flag.ordinal() < 8;
+      if ((bits & (1 << flag.ordinal())) != 0) {
+        flags.add(flag);
+      }
+    }
+    return flags;
+  }
+
+  private static byte entityUpdateFlagsToBits(final EnumSet<UpdateFlag> flags) {
+    byte bits = 0; 
+    for (final UpdateFlag flag : flags) {
+      assert flag.ordinal() < 8;
+      bits |= (1 << flag.ordinal());
+    }
+    return bits;
   }
 }
