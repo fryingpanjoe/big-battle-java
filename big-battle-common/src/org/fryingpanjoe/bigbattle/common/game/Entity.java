@@ -19,7 +19,7 @@ public class Entity {
   }
 
   private final int id;
-  private final EntityDefinition def;
+  private final EntityDefinition definition;
 
   private final EnumSet<UpdateFlag> updateFlags;
 
@@ -32,7 +32,7 @@ public class Entity {
   private float health;
 
   public Entity(final int id,
-                final EntityDefinition def,
+                final EntityDefinition definition,
                 final float x,
                 final float y,
                 final float velx,
@@ -41,7 +41,7 @@ public class Entity {
                 final State state,
                 final float health) {
     this.id = id;
-    this.def = def;
+    this.definition = definition;
     this.updateFlags = EnumSet.noneOf(UpdateFlag.class);
     this.x = x;
     this.y = y;
@@ -83,8 +83,8 @@ public class Entity {
     return this.id;
   }
 
-  public EntityDefinition getDef() {
-    return this.def;
+  public EntityDefinition getDefinition() {
+    return this.definition;
   }
 
   public EnumSet<UpdateFlag> getUpdateFlags() {

@@ -63,13 +63,15 @@ public class EntityRenderer {
       final Entity entity = renderEntity.getEntity();
       final float x = entity.getX();
       final float y = entity.getY();
-      final boolean culled = Culling.cullSphere(camera, x, y, entity.getDef().getRadius());
+      final boolean culled = Culling.cullSphere(camera, x, y, entity.getDefinition().getRadius());
       if (!culled) {
         GL11.glPushMatrix();
-        GL11.glTranslatef(x, entity.getDef().getSize().y * 0.5f, y);
+        GL11.glTranslatef(x, entity.getDefinition().getSize().y * 0.5f, y);
         GL11.glRotatef(entity.getRotation(), UP.x, UP.y, UP.z);
         GL11.glScalef(
-          entity.getDef().getSize().x, entity.getDef().getSize().y, entity.getDef().getSize().z);
+          entity.getDefinition().getSize().x,
+          entity.getDefinition().getSize().y,
+          entity.getDefinition().getSize().z);
         GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, this.cubeVertCount);
         GL11.glPopMatrix();
       }

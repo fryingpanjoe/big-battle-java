@@ -105,7 +105,7 @@ public class Protocol {
   public static void writeEntity(final ByteBuffer packet,
                                  final Entity entity) {
     packet.putInt(entity.getId());
-    packet.putInt(entity.getDef().getId());
+    packet.putInt(entity.getDefinition().getId());
     packet.putFloat(entity.getX());
     packet.putFloat(entity.getY());
     packet.putFloat(entity.getVelocityX());
@@ -117,7 +117,7 @@ public class Protocol {
 
   public static Entity readEntity(final ByteBuffer packet) {
     final int id = packet.getInt();
-    final EntityDefinition def = EntityDefinitions.getEntityDefinition(packet.getInt());
+    final EntityDefinition definition = EntityDefinitions.getEntityDefinition(packet.getInt());
     final float posX = packet.getFloat();
     final float posY = packet.getFloat();
     final float velX = packet.getFloat();
@@ -125,7 +125,7 @@ public class Protocol {
     final float rotation = packet.getFloat();
     final State state = Entity.State.values()[packet.get()];
     final float health = packet.getFloat();
-    return new Entity(id, def, posX, posY, velX, velY, rotation, state, health);
+    return new Entity(id, definition, posX, posY, velX, velY, rotation, state, health);
   }
 
   public static void writePlayerInput(final ByteBuffer packet,

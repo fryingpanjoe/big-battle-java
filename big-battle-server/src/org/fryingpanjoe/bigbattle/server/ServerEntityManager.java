@@ -52,7 +52,7 @@ public class ServerEntityManager {
     for (final ServerEntity entity : found) {
       final float ex = entity.getEntity().getX();
       final float ey = entity.getEntity().getY();
-      final float er = entity.getEntity().getDef().getRadius();
+      final float er = entity.getEntity().getDefinition().getRadius();
       if (Intersecting.sphereSphere(x, y, r, ex, ey, er)) {
         result.add(entity);
       }

@@ -42,7 +42,7 @@ public class PlayerInputController {
     }
     if (velx != 0.f || vely != 0.f) {
       final float moveLength = (float) Math.sqrt((velx * velx) + (vely * vely));
-      final float baseSpeed = entity.getDef().getSpeed();
+      final float baseSpeed = entity.getDefinition().getSpeed();
       velx *= speedFactor * baseSpeed / moveLength;
       vely *= speedFactor * baseSpeed / moveLength;
       entity.setVelocity(velx, vely);
