@@ -10,6 +10,8 @@ public class Entity {
     Rotation,
     State,
     Health,
+    Weapon,
+    WeaponTimer,
   }
 
   public enum State {
@@ -30,6 +32,8 @@ public class Entity {
   private float rotation;
   private State state;
   private float health;
+  private Weapon weapon;
+  private float weaponTimer;
 
   public Entity(final int id,
                 final EntityDefinition definition,
@@ -39,7 +43,9 @@ public class Entity {
                 final float vely,
                 final float rotation,
                 final State state,
-                final float health) {
+                final float health,
+                final Weapon weapon,
+                final float weaponTimer) {
     this.id = id;
     this.definition = definition;
     this.updateFlags = EnumSet.noneOf(UpdateFlag.class);
@@ -50,6 +56,8 @@ public class Entity {
     this.rotation = rotation;
     this.state = state;
     this.health = health;
+    this.weapon = weapon;
+    this.weaponTimer = weaponTimer;
   }
 
   public void setPosition(final float x, final float y) {
@@ -77,6 +85,16 @@ public class Entity {
   public void setHealth(final float health) {
     this.health = health;
     this.updateFlags.add(UpdateFlag.Health);
+  }
+
+  public void setWeapon(final Weapon weapon) {
+    this.weapon = weapon;
+    this.updateFlags.add(UpdateFlag.Weapon);
+  }
+
+  public void setWeaponTimer(final float weaponTimer) {
+    this.weaponTimer = weaponTimer;
+    this.updateFlags.add(UpdateFlag.WeaponTimer);
   }
 
   public int getId() {
@@ -117,5 +135,13 @@ public class Entity {
 
   public float getHealth() {
     return this.health;
+  }
+
+  public Weapon getWeapon() {
+    return this.weapon;
+  }
+
+  public float getWeaponTimer() {
+    return this.weaponTimer;
   }
 }

@@ -6,9 +6,13 @@ public class PlayerInputController {
   }
 
   public static void respondToPlayerInput(final Entity entity, final PlayerInput playerInput) {
+    if (entity.getState() == Entity.State.Dead) {
+      return;
+    }
     float speedFactor = 1.f;
     float velx = 0.f;
     float vely = 0.f;
+    Entity.State state = Entity.State.Idle;
     for (final PlayerInput.Action action : playerInput.getActions()) {
       switch (action) {
         case Running:
@@ -36,7 +40,7 @@ public class PlayerInputController {
           break;
 
         case Attacking:
-          // TODO implement
+          state = Entity.State.Attacking;
           break;
       }
     }
@@ -51,6 +55,9 @@ public class PlayerInputController {
     }
     if (entity.getRotation() != playerInput.getRotation()) {
       entity.setRotation(playerInput.getRotation());
+    }
+    if (entity.getState() != state) {
+      entity.setState(state);
     }
   }
 }

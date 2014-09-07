@@ -3,6 +3,7 @@ package org.fryingpanjoe.bigbattle.server;
 import org.fryingpanjoe.bigbattle.common.game.Entity;
 import org.fryingpanjoe.bigbattle.common.game.EntityDefinitions;
 import org.fryingpanjoe.bigbattle.common.game.Player;
+import org.fryingpanjoe.bigbattle.common.game.Weapons;
 import org.fryingpanjoe.bigbattle.server.game.ServerEntity;
 import org.fryingpanjoe.bigbattle.server.game.ServerNotice;
 import org.fryingpanjoe.bigbattle.server.game.ServerPlayer;
@@ -27,8 +28,15 @@ public class ServerSpawner {
 
   public ServerPlayer spawnClientPlayer(final int clientId, final float x, final float y) {
     final Entity entity = new Entity(
-      getNextEntityId(), EntityDefinitions.PLAYER, x, y, 0.f, 0.f, 0.f, Entity.State.Idle,
-      EntityDefinitions.PLAYER.getMaxHealth());
+      getNextEntityId(),
+      EntityDefinitions.PLAYER,
+      x, y,
+      0.f, 0.f,
+      0.f,
+      Entity.State.Idle,
+      EntityDefinitions.PLAYER.getMaxHealth(),
+      Weapons.STICK,
+      0.f);
     final ServerEntity serverEntity = new ServerEntity(entity);
     final Player player = new Player(clientId, serverEntity.getEntity().getId());
     final ServerNotice notice = new ServerNotice(serverEntity, PLAYER_NOTICE_RADIUS);

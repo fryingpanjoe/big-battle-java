@@ -13,6 +13,8 @@ import org.fryingpanjoe.bigbattle.common.game.EntityDefinition;
 import org.fryingpanjoe.bigbattle.common.game.EntityDefinitions;
 import org.fryingpanjoe.bigbattle.common.game.PlayerInput;
 import org.fryingpanjoe.bigbattle.common.game.PlayerInput.Action;
+import org.fryingpanjoe.bigbattle.common.game.Weapon;
+import org.fryingpanjoe.bigbattle.common.game.Weapons;
 
 public class Protocol {
 
@@ -74,6 +76,12 @@ public class Protocol {
     if (entity.getUpdateFlags().contains(Entity.UpdateFlag.Health)) {
       packet.putFloat(entity.getHealth());
     }
+    if (entity.getUpdateFlags().contains(Entity.UpdateFlag.Weapon)) {
+      packet.putInt(entity.getWeapon().getId());
+    }
+    if (entity.getUpdateFlags().contains(Entity.UpdateFlag.WeaponTimer)) {
+      packet.putFloat(entity.getWeaponTimer());
+    }
   }
 
   public static void readEntityDelta(final ByteBuffer packet,
@@ -99,6 +107,12 @@ public class Protocol {
     if (flags.contains(Entity.UpdateFlag.Health)) {
       entity.setHealth(packet.getFloat());
     }
+    if (flags.contains(Entity.UpdateFlag.Weapon)) {
+      entity.setWeapon(Weapons.getWeapon(packet.getInt()));
+    }
+    if (flags.contains(Entity.UpdateFlag.WeaponTimer)) {
+      entity.setWeaponTimer(packet.getFloat());
+    }
     entity.getUpdateFlags().clear();
   }
 
@@ -113,6 +127,8 @@ public class Protocol {
     packet.putFloat(entity.getRotation());
     packet.put((byte) entity.getState().ordinal());
     packet.putFloat(entity.getHealth());
+    packet.putInt(entity.getWeapon().getId());
+    packet.putFloat(entity.getWeaponTimer());
   }
 
   public static Entity readEntity(final ByteBuffer packet) {
@@ -125,7 +141,10 @@ public class Protocol {
     final float rotation = packet.getFloat();
     final State state = Entity.State.values()[packet.get()];
     final float health = packet.getFloat();
-    return new Entity(id, definition, posX, posY, velX, velY, rotation, state, health);
+    final Weapon weapon = Weapons.getWeapon(packet.getInt());
+    final float weaponTimer = packet.getFloat();
+    return new Entity(
+      id, definition, posX, posY, velX, velY, rotation, state, health, weapon, weaponTimer);
   }
 
   public static void writePlayerInput(final ByteBuffer packet,

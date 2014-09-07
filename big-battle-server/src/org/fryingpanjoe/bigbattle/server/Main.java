@@ -110,7 +110,7 @@ public class Main {
       lastUpdatedAt = now;
       final float dt = (float) deltaTime / 1000.f;
       playerManager.updatePlayerInput();
-      entityManager.updatePositions(dt);
+      entityManager.update(dt);
       noticeManager.updateNotices();
 
       // send updates to clients

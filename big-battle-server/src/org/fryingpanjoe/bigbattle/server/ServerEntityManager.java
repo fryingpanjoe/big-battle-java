@@ -5,7 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.fryingpanjoe.bigbattle.common.game.Entity;
 import org.fryingpanjoe.bigbattle.server.game.ServerEntity;
+import org.lwjgl.util.vector.Vector2f;
 
 public class ServerEntityManager {
 
@@ -17,14 +19,49 @@ public class ServerEntityManager {
     this.quadtree = new Quadtree<>();
   }
 
-  public void updatePositions(final float dt) {
+  public void update(final float dt) {
     for (final ServerEntity entity : this.entities.values()) {
+      if (entity.getEntity().getState() == Entity.State.Dead) {
+        continue;
+      }
+      // move
       final float x = entity.getEntity().getX() + entity.getEntity().getVelocityX() * dt;
       final float y = entity.getEntity().getY() + entity.getEntity().getVelocityY() * dt;
       if (x != entity.getEntity().getX() || y != entity.getEntity().getY()) {
         entity.getEntity().setPosition(x, y);
         this.quadtree.remove(entity);
         this.quadtree.insert(entity, entity.getEntity().getX(), entity.getEntity().getY());
+      }
+      // attack
+      entity.getEntity().setWeaponTimer(Math.max(0.f, entity.getEntity().getWeaponTimer() - dt));
+      if (entity.getEntity().getState() == Entity.State.Attacking) {
+        if (entity.getEntity().getWeaponTimer() <= 0.f) {
+          // get possible targets
+          final List<ServerEntity> targets = getEntitiesInSphere(
+            entity.getEntity().getX(),
+            entity.getEntity().getY(),
+            entity.getEntity().getWeapon().getRange());
+          final Vector2f attackDirection = new Vector2f(
+            (float) Math.cos(entity.getEntity().getRotation()),
+            (float) Math.sin(entity.getEntity().getRotation()));
+          for (final ServerEntity target : targets) {
+            // check if target is in front of attacker
+            final Vector2f toTarget = new Vector2f(
+              target.getEntity().getX() - entity.getEntity().getX(),
+              target.getEntity().getY() - entity.getEntity().getY());
+            final float dot = Vector2f.dot(attackDirection, toTarget);
+            if (dot >= 0.f) {
+              // hit
+              float health = target.getEntity().getHealth();
+              health -= entity.getEntity().getWeapon().getDamage();
+              if (health < 0.f) {
+                target.getEntity().setState(Entity.State.Dead);
+              }
+              target.getEntity().setHealth(health);
+            }
+          }
+          entity.getEntity().setWeaponTimer(entity.getEntity().getWeapon().getDelay());
+        }
       }
     }
   }
