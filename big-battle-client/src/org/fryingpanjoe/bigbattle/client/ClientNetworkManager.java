@@ -34,7 +34,7 @@ public class ClientNetworkManager {
     final DatagramChannel socket = DatagramChannel.open();
     socket.configureBlocking(false);
     socket.connect(address);
-    this.channel = new ClientChannel(new Channel(socket, address), socket, address);
+    this.channel = new ClientChannel(new Channel(socket, address), socket);
     this.eventBus.post(new ConnectedEvent());
   }
 

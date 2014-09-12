@@ -1,7 +1,6 @@
 package org.fryingpanjoe.bigbattle.client;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
@@ -13,14 +12,11 @@ public class ClientChannel {
 
   private final Channel channel;
   private final DatagramChannel socket;
-  private final InetSocketAddress address;
 
   public ClientChannel(final Channel channel,
-                       final DatagramChannel socket,
-                       final InetSocketAddress address) {
+                       final DatagramChannel socket) {
     this.channel = channel;
     this.socket = socket;
-    this.address = address;
   }
 
   public void close() {
@@ -37,9 +33,6 @@ public class ClientChannel {
     final ByteBuffer receivedData = Channel.createPacketBuffer();
     final SocketAddress from = this.socket.receive(receivedData);
     if (from != null) {
-      /*if (!from.equals(this.address)) {
-        LOG.warning("Received data did not come from server");
-      }*/
       receivedData.flip();
       return this.channel.onDataReceived(receivedData);
     } else {
