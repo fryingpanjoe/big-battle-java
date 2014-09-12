@@ -12,6 +12,7 @@ import org.fryingpanjoe.bigbattle.client.game.ClientEntity;
 import org.fryingpanjoe.bigbattle.client.rendering.EntityRenderer;
 import org.fryingpanjoe.bigbattle.client.rendering.IsometricCamera;
 import org.fryingpanjoe.bigbattle.client.rendering.TerrainRenderer;
+import org.fryingpanjoe.bigbattle.common.game.Entity;
 import org.fryingpanjoe.bigbattle.common.game.PlayerInput;
 import org.fryingpanjoe.bigbattle.common.game.PlayerInputController;
 import org.fryingpanjoe.bigbattle.common.networking.Channel;
@@ -61,11 +62,8 @@ public class MultiplayerActivity implements Activity {
     }
     this.entityManager.updatePositions(deltaTime);
     if (this.inputRate.shouldUpdate()) {
-      final ByteBuffer packet = Channel.createPacketBuffer();
-      Protocol.writePacketHeader(packet, Protocol.PacketType.PlayerInput);
-      Protocol.writePlayerInput(packet, this.playerInput);
-      packet.flip();
-      this.networkManager.sendPacketToServer(packet);
+      //sendPlayerInputToServer(this.playerInput);
+      sendPlayerEntityToServer(playerEntity.getEntity());
     }
     return true;
   }
@@ -115,5 +113,22 @@ public class MultiplayerActivity implements Activity {
 
   @Override
   public void mouseMove(final int x, final int y, final int dx, final int dy) {
+  }
+
+  private void sendPlayerInputToServer(final PlayerInput playerInput) {
+    final ByteBuffer packet = Channel.createPacketBuffer();
+    Protocol.writePacketHeader(packet, Protocol.PacketType.PlayerInput);
+    Protocol.writePlayerInput(packet, playerInput);
+    packet.flip();
+    this.networkManager.sendPacketToServer(packet);
+  }
+
+  private void sendPlayerEntityToServer(final Entity entity) {
+    final ByteBuffer packet = Channel.createPacketBuffer();
+    Protocol.writePacketHeader(packet, Protocol.PacketType.EntityDelta);
+    entity.getUpdateFlags().remove(Entity.UpdateFlag.Velocity);
+    Protocol.writeEntityDelta(packet, entity);
+    packet.flip();
+    this.networkManager.sendPacketToServer(packet);
   }
 }
