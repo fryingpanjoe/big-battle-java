@@ -18,6 +18,7 @@ import org.fryingpanjoe.bigbattle.common.game.PlayerInputController;
 import org.fryingpanjoe.bigbattle.common.networking.Channel;
 import org.fryingpanjoe.bigbattle.common.networking.Protocol;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
 public class MultiplayerActivity implements Activity {
@@ -113,6 +114,9 @@ public class MultiplayerActivity implements Activity {
 
   @Override
   public void mouseMove(final int x, final int y, final int dx, final int dy) {
+    final double isoAdjust = Math.PI / 4.0;
+    final double toMouse = Math.atan2(y - (Display.getHeight() / 2), x - (Display.getWidth() / 2));
+    this.playerInput.setRotation((float) (isoAdjust + toMouse));
   }
 
   private void sendPlayerInputToServer(final PlayerInput playerInput) {
