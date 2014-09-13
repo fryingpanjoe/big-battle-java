@@ -33,7 +33,7 @@ public class ClientTerrainManager {
         LOG.warning(
           String.format("Failed to load patch %d,%d: %s", location.x, location.y, e.getMessage()));
         patch = TerrainGenerator.generateRandomPatch(
-          Constants.AREA_SIZE_IN_TILES, Arrays.asList(0), new Random());
+          Constants.AREA_SIZE_IN_TILES, Arrays.asList(0, 1), new Random());
       }
     }
     this.patches.put(location, patch);
