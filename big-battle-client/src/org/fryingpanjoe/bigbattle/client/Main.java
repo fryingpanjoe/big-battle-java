@@ -15,7 +15,7 @@ import org.fryingpanjoe.bigbattle.client.config.ClientConfig;
 import org.fryingpanjoe.bigbattle.client.events.ConnectedEvent;
 import org.fryingpanjoe.bigbattle.client.events.DisconnectedEvent;
 import org.fryingpanjoe.bigbattle.client.events.ReceivedPacketFromServerEvent;
-import org.fryingpanjoe.bigbattle.client.rendering.Defaults;
+import org.fryingpanjoe.bigbattle.client.rendering.OpenGLDefaults;
 import org.fryingpanjoe.bigbattle.client.rendering.EntityRenderer;
 import org.fryingpanjoe.bigbattle.client.rendering.TerrainRenderer;
 import org.fryingpanjoe.bigbattle.common.events.EnterGameEvent;
@@ -54,8 +54,8 @@ public class Main {
       Display.setVSyncEnabled(config.getDisplayVsync());
       Display.create();
 
-      Defaults.setupGLInvariants();
-      Defaults.setupViewportFromDisplay();
+      OpenGLDefaults.setupGLInvariants();
+      OpenGLDefaults.setupViewportFromDisplay();
 
       final EventBus eventBus = new EventBus();
       final ClientNetworkManager networkManager = new ClientNetworkManager(eventBus);

@@ -3,7 +3,7 @@ package org.fryingpanjoe.bigbattle.client.rendering;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
-public class Defaults {
+public class OpenGLDefaults {
 
   public static void setupGLInvariants() {
     GL11.glShadeModel(GL11.GL_NICEST);
