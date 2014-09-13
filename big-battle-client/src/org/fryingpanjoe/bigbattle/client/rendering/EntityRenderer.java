@@ -67,7 +67,7 @@ public class EntityRenderer {
       if (!culled) {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, entity.getDefinition().getSize().y * 0.5f, y);
-        GL11.glRotatef(entity.getRotation(), UP.x, UP.y, UP.z);
+        GL11.glRotatef((float) Math.toDegrees(entity.getRotation()), UP.x, UP.y, UP.z);
         GL11.glScalef(
           entity.getDefinition().getSize().x,
           entity.getDefinition().getSize().y,
