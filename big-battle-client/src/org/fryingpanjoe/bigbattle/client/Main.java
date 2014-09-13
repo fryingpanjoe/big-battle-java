@@ -174,6 +174,8 @@ public class Main {
               }
               mouseWheel = Mouse.getEventDWheel();
             }
+            activity.mouseMove(
+              Mouse.getEventX(), Mouse.getEventY(), Mouse.getEventDX(), Mouse.getEventDY());
           }
           final long now = Sys.getTime();
           final long timeSinceLastUpdate = now - lastUpdateTime;
