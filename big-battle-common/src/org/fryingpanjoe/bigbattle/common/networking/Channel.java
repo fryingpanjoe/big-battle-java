@@ -14,7 +14,7 @@ public class Channel {
   private static final int MAX_PACKET_SIZE = 512;
 
   // must be <= number of ack bits
-  private static final int WINDOW_SIZE = 32;
+  private static final int ACK_WINDOW_SIZE = 32;
 
   private final DatagramChannel socket;
   private final SocketAddress address;
@@ -79,7 +79,7 @@ public class Channel {
                                   final byte[] receivedPacketData) {
     if (receivedPacketId < this.remotePacketId) {
       final int bit = this.remotePacketId - receivedPacketId - 1;
-      if (bit >= WINDOW_SIZE) {
+      if (bit >= ACK_WINDOW_SIZE) {
         // packet too old, ignore it
         return null;
       } else {
@@ -93,6 +93,6 @@ public class Channel {
   }
 
   private static int shiftAckBits(final int ack, final int shift) {
-    return shift < WINDOW_SIZE ? (ack << shift) : 0;
+    return shift < ACK_WINDOW_SIZE ? (ack << shift) : 0;
   }
 }
