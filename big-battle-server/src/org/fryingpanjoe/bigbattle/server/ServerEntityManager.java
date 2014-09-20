@@ -4,12 +4,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.fryingpanjoe.bigbattle.common.game.Entity;
 import org.fryingpanjoe.bigbattle.server.game.ServerEntity;
 import org.lwjgl.util.vector.Vector2f;
 
 public class ServerEntityManager {
+
+  private static final Logger LOG = Logger.getLogger(ServerEntityManager.class.getName());
 
   private final Map<Integer, ServerEntity> entities;
   private final Quadtree<ServerEntity> quadtree;
@@ -56,10 +59,22 @@ public class ServerEntityManager {
             final float dot = Vector2f.dot(attackDirection, toTarget);
             if (dot >= 0.f) {
               // hit
-              target.getEntity().setHealth(
-                target.getEntity().getHealth() - entity.getEntity().getWeapon().getDamage());
-              if (target.getEntity().getHealth() <= 0.f) {
-                target.getEntity().setState(Entity.State.Dead);
+              final float healthBefore = target.getEntity().getHealth();
+              if (healthBefore > 0.f) {
+                final float damage = entity.getEntity().getWeapon().getDamage();
+                final float healthAfter = healthBefore - damage;
+                LOG.info(
+                  String.format(
+                    "Entity %d was hit by %d for %.2f damage %.2f hit points left",
+                    entity.getEntity().getId(), target.getEntity().getId(), damage, healthAfter));
+                target.getEntity().setHealth(healthAfter);
+                if (healthAfter <= 0.f) {
+                  LOG.info(
+                    String.format(
+                      "Entity %d died with %.2f hit points left",
+                      target.getEntity().getId(), healthAfter));
+                  target.getEntity().setState(Entity.State.Dead);
+                }
               }
             }
           }
