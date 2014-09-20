@@ -163,16 +163,18 @@ public class ServerNetworkManager {
           if (!found) {
             final Channel channel = new Channel(this.socket, address);
             final Packet packet = channel.onDataReceived(receivedData);
-            final ByteBuffer packetDataBuffer = ByteBuffer.wrap(packet.getData());
-            final Protocol.PacketType packetType = Protocol.readPacketHeader(packetDataBuffer);
-            if (packetType == Protocol.PacketType.Hello) {
-              final Client client = new Client(getNextClientId(), channel, address);
-              this.clients.add(client);
-              LOG.info(
-                String.format(
-                  "Client %d connected (%s)",
-                  client.getId(), ((InetSocketAddress) address).getHostString()));
-              this.eventBus.post(new ClientConnectedEvent(client.getId()));
+            if (packet != null) {
+              final ByteBuffer packetDataBuffer = ByteBuffer.wrap(packet.getData());
+              final Protocol.PacketType packetType = Protocol.readPacketHeader(packetDataBuffer);
+              if (packetType == Protocol.PacketType.Hello) {
+                final Client client = new Client(getNextClientId(), channel, address);
+                this.clients.add(client);
+                LOG.info(
+                  String.format(
+                    "Client %d connected (%s)",
+                    client.getId(), ((InetSocketAddress) address).getHostString()));
+                this.eventBus.post(new ClientConnectedEvent(client.getId()));
+              }
             }
           }
         } else {
