@@ -11,6 +11,18 @@ public class Channel {
 
   private static final Logger LOG = Logger.getLogger(Channel.class.getName());
 
+  private static final String PROTOCOL_VERSION_STRING = "big-battle-protocol-v1";
+  private static final int PROTOCOL_VERSION = PROTOCOL_VERSION_STRING.hashCode();
+
+  private static final int PACKET_HEADER_SIZE =
+      4 // (int32) protocol version
+    + 2 // (int16) packet size
+    + 4 // (int32) local packet id
+    + 4 // (int32) remote packet id
+    + 4 // (int32) ack bits
+    + 2 // (int16) payload size
+    ;
+
   private static final int MAX_PACKET_SIZE = 512;
 
   // must be <= number of ack bits
@@ -35,11 +47,12 @@ public class Channel {
   }
 
   public void sendPacket(final ByteBuffer data) throws IOException {
-    final int serializedPacketSize = 2 + 4 + 4 + 4 + 2 + data.remaining();
+    final int serializedPacketSize = PACKET_HEADER_SIZE + data.remaining();
     if (serializedPacketSize > MAX_PACKET_SIZE) {
       throw new RuntimeException("Packet too big: " + serializedPacketSize);
     }
     final ByteBuffer packet = createPacketBuffer()
+      .putInt(PROTOCOL_VERSION)
       .putShort((short)serializedPacketSize)
       .putInt(this.localPacketId)
       .putInt(this.remotePacketId)
@@ -54,18 +67,26 @@ public class Channel {
   }
 
   public Packet onDataReceived(final ByteBuffer data) {
-    if (data.limit() > 2) {
-      final short packetSize = data.getShort();
-      if (data.limit() >= packetSize) {
-        final int packetId = data.getInt();
-        final int ackPacketId = data.getInt();
-        final int ackBits = data.getInt();
-        final short packetDataSize = data.getShort();
-        final byte[] packetData = new byte[packetDataSize];
-        data.get(packetData);
-        return onPacketReceived(packetId, ackPacketId, ackBits, packetData);
+    if (data.limit() >= PACKET_HEADER_SIZE) {
+      final int protocolVersion = data.getInt();
+      if (protocolVersion == PROTOCOL_VERSION) {
+        final short packetSize = data.getShort();
+        if (data.limit() >= packetSize) {
+          final int packetId = data.getInt();
+          final int ackPacketId = data.getInt();
+          final int ackBits = data.getInt();
+          final short packetDataSize = data.getShort();
+          final byte[] packetData = new byte[packetDataSize];
+          data.get(packetData);
+          return onPacketReceived(packetId, ackPacketId, ackBits, packetData);
+        } else {
+          LOG.warning(
+            String.format("Bad packet received: size %d < %d", data.limit(), packetSize));
+        }
       } else {
-        LOG.warning(String.format("Bad packet received: size %d < %d", data.limit(), packetSize));
+        LOG.warning(
+          String.format(
+            "Bad packet received: wrong protocol %d != %d", protocolVersion, PROTOCOL_VERSION));
       }
     } else {
       LOG.warning("Bad packet received: missing header");
