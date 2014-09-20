@@ -19,7 +19,7 @@ Project setup: Eclipse
 `big-battle-common` on:
   * `thirdparty/commons-io-2.4.jar`
   * `thirdparty/config-1.2.1.jar`
-  * `thirdparty/guava-17.0.jar`
+  * `thirdparty/guava-18.0.jar`
   * `thirdparty/hamcrest-core-1.3.jar`
   * `thirdparty/json-20140107.jar`
   * `thirdparty/junit-4.11.jar`
