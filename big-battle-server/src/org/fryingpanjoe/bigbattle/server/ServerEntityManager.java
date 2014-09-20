@@ -52,12 +52,8 @@ public class ServerEntityManager {
             final float dot = Vector2f.dot(attackDirection, toTarget);
             if (dot >= 0.f) {
               // hit
-              float health = target.getEntity().getHealth();
-              health -= entity.getEntity().getWeapon().getDamage();
-              if (health < 0.f) {
-                target.getEntity().setState(Entity.State.Dead);
-              }
-              target.getEntity().setHealth(health);
+              target.getEntity().setHealth(
+                target.getEntity().getHealth() - entity.getEntity().getWeapon().getDamage());
             }
           }
           entity.getEntity().setWeaponTimer(entity.getEntity().getWeapon().getDelay());
