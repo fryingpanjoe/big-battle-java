@@ -45,6 +45,10 @@ public class ServerEntityManager {
             (float) Math.cos(entity.getEntity().getRotation()),
             (float) Math.sin(entity.getEntity().getRotation()));
           for (final ServerEntity target : targets) {
+            if (target == entity) {
+              // don't attack yourself
+              continue;
+            }
             // check if target is in front of attacker
             final Vector2f toTarget = new Vector2f(
               target.getEntity().getX() - entity.getEntity().getX(),
