@@ -4,6 +4,7 @@ import org.lwjgl.util.vector.Vector3f;
 
 public class StaticGeometries {
 
+  // cube (tris)
   public static final float[] CUBE_VERT_XYZ = {
     // top
     -0.5f,  0.5f, -0.5f,
@@ -154,7 +155,7 @@ public class StaticGeometries {
     -1.f,  0.f,  0.f,
   };
 
-
+  // pyramid (tris)
   public static final float[] PYRAMID_VERT_XYZ = {
     // front
      0.f,  0.5f,  0.f,
