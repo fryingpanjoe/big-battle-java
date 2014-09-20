@@ -54,6 +54,9 @@ public class ServerEntityManager {
               // hit
               target.getEntity().setHealth(
                 target.getEntity().getHealth() - entity.getEntity().getWeapon().getDamage());
+              if (target.getEntity().getHealth() <= 0.f) {
+                target.getEntity().setState(Entity.State.Dead);
+              }
             }
           }
           entity.getEntity().setWeaponTimer(entity.getEntity().getWeapon().getDelay());
