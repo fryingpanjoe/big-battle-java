@@ -155,22 +155,22 @@ public class StaticGeometries {
     -1.f,  0.f,  0.f,
   };
 
-  // quad (tristrip)
-  public static final float[] QUAD_VERT_TRISTRIP_XYZ = {
+  // top quad (tristrip)
+  public static final float[] TOP_QUAD_VERT_TRISTRIP_XYZ = {
     -0.5f,  0.f,  0.5f,
     -0.5f,  0.f, -0.5f,
      0.5f,  0.f,  0.5f,
      0.5f,  0.f, -0.5f,
   };
 
-  public static final float[] QUAD_VERT_TRISTRIP_UV = {
+  public static final float[] TOP_QUAD_VERT_TRISTRIP_UV = {
     0.f, 1.f,
     0.f, 0.f,
     1.f, 1.f,
     0.f, 1.f,
   };
 
-  public static final float[] QUAD_VERT_TRISTRIP_NORM = {
+  public static final float[] TOP_QUAD_VERT_TRISTRIP_NORM = {
     0.f,  1.f,  0.f,
     0.f,  1.f,  0.f,
     0.f,  1.f,  0.f,
