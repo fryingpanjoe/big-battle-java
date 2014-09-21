@@ -22,7 +22,7 @@ public class TerrainRenderer {
   private static final int ATLAS_TILE_SIZE = 8;
 
   private static final int TILES_PER_FRAME = 1024; // approxmiate
-  private static final int VERTS_PER_TILE = StaticGeometries.CUBE_VERT_XYZ.length / 3;
+  private static final int VERTS_PER_TILE = StaticGeometries.TOP_QUAD_TRI_VERT_XYZ.length / 3;
   private static final int FLOATS_PER_VERT = 3 + 3 + 2; // xyz, norm, uv
   private static final int BYTES_PER_FLOAT = 4;
 
@@ -32,6 +32,8 @@ public class TerrainRenderer {
   private static final int VERTEX_OFFSET_XYZ = 0;
   private static final int VERTEX_OFFSET_UV = 3 * BYTES_PER_FLOAT;
   private static final int VERTEX_OFFSET_NORM = (3 + 2) * BYTES_PER_FLOAT;
+
+  private final float[] quadVertData;
 
   private final ClientTerrainManager terrainManager;
   private final Texture atlas;
@@ -58,6 +60,18 @@ public class TerrainRenderer {
     this.vbo = GL15.glGenBuffers();
     GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.vbo);
     GL15.glBufferData(GL15.GL_ARRAY_BUFFER, this.vboSize, GL15.GL_STREAM_DRAW);
+
+    this.quadVertData = new float[FLOATS_PER_VERT * VERTS_PER_TILE];
+    for (int i = 0, index = 0; i < VERTS_PER_TILE; ++i) {
+      this.quadVertData[index++] = 0.5f + StaticGeometries.TOP_QUAD_TRI_VERT_XYZ[(i * 3) + 0];
+      this.quadVertData[index++] = 0.0f + StaticGeometries.TOP_QUAD_TRI_VERT_XYZ[(i * 3) + 1];
+      this.quadVertData[index++] = 0.5f + StaticGeometries.TOP_QUAD_TRI_VERT_XYZ[(i * 3) + 2];
+      this.quadVertData[index++] = StaticGeometries.TOP_QUAD_TRI_VERT_UV[(i * 2) + 0];
+      this.quadVertData[index++] = StaticGeometries.TOP_QUAD_TRI_VERT_UV[(i * 2) + 1];
+      this.quadVertData[index++] = StaticGeometries.TOP_QUAD_TRI_VERT_NORM[(i * 3) + 0];
+      this.quadVertData[index++] = StaticGeometries.TOP_QUAD_TRI_VERT_NORM[(i * 3) + 1];
+      this.quadVertData[index++] = StaticGeometries.TOP_QUAD_TRI_VERT_NORM[(i * 3) + 2];
+    }
   }
 
   public void renderTerrain(final IsometricCamera camera) {
@@ -91,20 +105,19 @@ public class TerrainRenderer {
             continue;
           }
           final int tile = patch.getTiles()[x + y * patch.getSize()];
-          final int tileVertCount = 6; //StaticGeometries.CUBE_VERT_XYZ.length / 3;
-          for (int i = 0; i < tileVertCount; ++i) {
-            vertData[vertDataIndex++] = 0.5f + StaticGeometries.CUBE_VERT_XYZ[(i * 3) + 0] + tileX;
-            vertData[vertDataIndex++] = 0.f; //0.5f - StaticGeometries.CUBE_VERT_XYZ[(i * 3) + 1];
-            vertData[vertDataIndex++] = 0.5f + StaticGeometries.CUBE_VERT_XYZ[(i * 3) + 2] + tileY;
+          for (int i = 0, index = 0; i < VERTS_PER_TILE; ++i) {
+            vertData[vertDataIndex++] = this.quadVertData[index++] + tileX;
+            vertData[vertDataIndex++] = this.quadVertData[index++];
+            vertData[vertDataIndex++] = this.quadVertData[index++] + tileY;
             vertData[vertDataIndex++] =
-              (StaticGeometries.CUBE_VERT_UV[(i * 2) + 0] + (tile % this.atlasTilesPerRow)) *
+              (this.quadVertData[index++] + (tile % this.atlasTilesPerRow)) *
               this.atlasTileSizeU;
             vertData[vertDataIndex++] =
-              (StaticGeometries.CUBE_VERT_UV[(i * 2) + 1] + (tile / this.atlasTilesPerRow)) *
+              (this.quadVertData[index++] + (tile / this.atlasTilesPerRow)) *
               this.atlasTileSizeV;
-            vertData[vertDataIndex++] = StaticGeometries.CUBE_VERT_NORM[(i * 3) + 0];
-            vertData[vertDataIndex++] = StaticGeometries.CUBE_VERT_NORM[(i * 3) + 1];
-            vertData[vertDataIndex++] = StaticGeometries.CUBE_VERT_NORM[(i * 3) + 2];
+            vertData[vertDataIndex++] = this.quadVertData[index++];
+            vertData[vertDataIndex++] = this.quadVertData[index++];
+            vertData[vertDataIndex++] = this.quadVertData[index++];
             ++vertCount;
           }
         }
