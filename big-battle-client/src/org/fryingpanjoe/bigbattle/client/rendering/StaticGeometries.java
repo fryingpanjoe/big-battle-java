@@ -177,6 +177,34 @@ public class StaticGeometries {
     0.f,  1.f,  0.f,
   };
 
+  // top quad (tris)
+  public static final float[] TOP_QUAD_TRI_VERT_XYZ = {
+    -0.5f,  0.f, -0.5f,
+    -0.5f,  0.f,  0.5f,
+     0.5f,  0.f,  0.5f,
+     0.5f,  0.f,  0.5f,
+     0.5f,  0.f, -0.5f,
+    -0.5f,  0.f, -0.5f,
+  };
+
+  public static final float[] TOP_QUAD_TRI_VERT_UV = {
+    0.f, 1.f,
+    0.f, 0.f,
+    1.f, 0.f,
+    1.f, 0.f,
+    1.f, 1.f,
+    0.f, 1.f,
+  };
+
+  public static final float[] TOP_QUAD_TRI_VERT_NORM = {
+    0.f,  1.f,  0.f,
+    0.f,  1.f,  0.f,
+    0.f,  1.f,  0.f,
+    0.f,  1.f,  0.f,
+    0.f,  1.f,  0.f,
+    0.f,  1.f,  0.f,
+  };
+
   // pyramid (tris)
   public static final float[] PYRAMID_VERT_XYZ = {
     // front
