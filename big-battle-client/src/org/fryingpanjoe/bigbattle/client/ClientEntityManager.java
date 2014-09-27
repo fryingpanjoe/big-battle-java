@@ -2,6 +2,7 @@ package org.fryingpanjoe.bigbattle.client;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.fryingpanjoe.bigbattle.client.game.ClientEntity;
 import org.fryingpanjoe.bigbattle.client.rendering.RenderEntity;
@@ -11,6 +12,8 @@ import org.fryingpanjoe.bigbattle.common.events.EntityNoticedEvent;
 import com.google.common.eventbus.Subscribe;
 
 public class ClientEntityManager {
+
+  private static final Logger LOG = Logger.getLogger(ClientEntityManager.class.getName());
 
   private final Map<Integer, ClientEntity> entities;
   private final Map<Integer, RenderEntity> renderEntities;
@@ -44,6 +47,7 @@ public class ClientEntityManager {
       entity.getEntity().setVelocity(event.entity.getVelocityX(), event.entity.getVelocityY());
       entity.getEntity().setRotation(event.entity.getRotation());
     } else {
+      LOG.info(String.format("Noticed entity %d", event.entity.getId()));
       this.entities.put(event.entity.getId(), new ClientEntity(event.entity));
       this.renderEntities.put(event.entity.getId(), new RenderEntity(event.entity));
     }
@@ -51,6 +55,7 @@ public class ClientEntityManager {
 
   @Subscribe
   public void onLostEntityEvent(final EntityLostEvent event) {
+    LOG.info(String.format("Lost entity %d", event.entityId));
     this.renderEntities.remove(event.entityId);
     this.entities.remove(event.entityId);
   }
