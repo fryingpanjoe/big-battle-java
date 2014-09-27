@@ -32,7 +32,8 @@ public class Main {
     final ServerPlayerManager playerManager = new ServerPlayerManager();
     final ServerAIManager aiManager = new ServerAIManager();
     final ServerNoticeManager noticeManager = new ServerNoticeManager(entityManager);
-    final ServerSpawner spawner = new ServerSpawner(entityManager, playerManager, noticeManager);
+    final ServerSpawner spawner = new ServerSpawner(
+      entityManager, playerManager, aiManager, noticeManager);
 
     final EventBus eventBus = new EventBus();
     final ServerNetworkManager networkManager = new ServerNetworkManager(eventBus);
