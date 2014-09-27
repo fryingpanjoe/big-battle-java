@@ -30,6 +30,7 @@ public class Channel {
 
   private final DatagramChannel socket;
   private final SocketAddress address;
+  private final RTT rtt;
   private int ackBits;
   private int localPacketId;
   private int remotePacketId;
@@ -37,6 +38,7 @@ public class Channel {
   public Channel(final DatagramChannel socket, final SocketAddress address) {
     this.socket = socket;
     this.address = address;
+    this.rtt = new RTT();
     this.ackBits = 0;
     this.localPacketId = 0;
     this.remotePacketId = -1;
@@ -63,6 +65,7 @@ public class Channel {
     if (this.socket.send(packet, this.address) == 0) {
       throw new IOException("No bytes sent");
     }
+    this.rtt.recordSentPacket(this.localPacketId, (int) System.currentTimeMillis());
     ++this.localPacketId;
   }
 
@@ -94,6 +97,10 @@ public class Channel {
     return null;
   }
 
+  public RTT getRTT() {
+    return this.rtt;
+  }
+
   private Packet onPacketReceived(final int receivedPacketId,
                                   final int receivedAckPacketId,
                                   final int receivedAckBits,
@@ -110,6 +117,7 @@ public class Channel {
       this.ackBits = shiftAckBits(this.ackBits, receivedPacketId - this.remotePacketId);
       this.remotePacketId = receivedPacketId;
     }
+    this.rtt.recordReceivedPacket(receivedPacketId, (int) System.currentTimeMillis());
     return new Packet(receivedPacketId, receivedAckPacketId, receivedAckBits, receivedPacketData);
   }
 
