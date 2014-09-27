@@ -93,6 +93,8 @@ public class Main {
 
     final UpdateTimer serverFrameTimer = UpdateTimer.fromMaxFps(config.getMaxFps());
 
+    spawner.spawnEvilSquirrel(95.f, 95.f);
+
     while (true) {
       final long timeUntilUpdate = serverFrameTimer.getTimeUntilUpdate();
       if (timeUntilUpdate > 0) {
