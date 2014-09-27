@@ -30,6 +30,7 @@ public class Main {
 
     final ServerEntityManager entityManager = new ServerEntityManager();
     final ServerPlayerManager playerManager = new ServerPlayerManager();
+    final ServerAIManager aiManager = new ServerAIManager();
     final ServerNoticeManager noticeManager = new ServerNoticeManager(entityManager);
     final ServerSpawner spawner = new ServerSpawner(entityManager, playerManager, noticeManager);
 
@@ -110,6 +111,7 @@ public class Main {
       lastUpdatedAt = now;
       final float dt = (float) deltaTime / 1000.f;
       playerManager.updatePlayerInput();
+      aiManager.updateAI(dt);
       entityManager.update(dt);
       noticeManager.updateNotices();
 
