@@ -152,6 +152,10 @@ public class Main {
       long lastUpdateTime = Sys.getTime();
 
       while (!Display.isCloseRequested()) {
+        final long now = Sys.getTime();
+        final long timeSinceLastUpdate = now - lastUpdateTime;
+        lastUpdateTime = now;
+        final float deltaTime = (float) timeSinceLastUpdate / 1000.f;
         networkManager.receivePacketFromServer();
         if (!activityStack.isEmpty()) {
           final Activity activity = activityStack.get(0);
@@ -177,10 +181,6 @@ public class Main {
             activity.mouseMove(
               Mouse.getEventX(), Mouse.getEventY(), Mouse.getEventDX(), Mouse.getEventDY());
           }
-          final long now = Sys.getTime();
-          final long timeSinceLastUpdate = now - lastUpdateTime;
-          lastUpdateTime = now;
-          final float deltaTime = (float) timeSinceLastUpdate / 1000.f;
           if (!activity.update(deltaTime)) {
             break;
           }
@@ -190,7 +190,7 @@ public class Main {
         if (config.getDisplayFps().isPresent()) {
           Display.sync(config.getDisplayFps().get());
         }
-        if (fpsCounter.update()) {
+        if (fpsCounter.update(deltaTime)) {
           Display.setTitle(String.format("%s (%.2f FPS)", TITLE, fpsCounter.getFps()));
         }
       }

@@ -1,26 +1,23 @@
 package org.fryingpanjoe.bigbattle.client;
 
-import org.lwjgl.Sys;
-
 public class UpdateRateTimer {
 
-  public static UpdateRateTimer fromFps(final float fps) {
-    return new UpdateRateTimer((long) (1000.f / fps));
+  private float interval;
+  private float time;
+
+  public UpdateRateTimer(final float rate) {
+    this.interval = 1.f / rate;
+    this.time = 0.f;
   }
 
-  private final long interval;
-  private long time;
-
-  private UpdateRateTimer(final long interval) {
-    this.interval = interval;
-    this.time = Sys.getTime();
+  public void setRate(final float rate) {
+    this.interval = 1.f / rate;
   }
 
-  public boolean shouldUpdate() {
-    final long now = Sys.getTime();
-    final long timeSinceUpdate = now - this.time;
-    if (timeSinceUpdate >= this.interval) {
-      this.time = now;
+  public boolean shouldUpdate(final float timeDelta) {
+    this.time += timeDelta;
+    if (this.time >= this.interval) {
+      this.time = 0.f;
       return true;
     } else {
       return false;

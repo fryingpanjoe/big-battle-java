@@ -33,7 +33,7 @@ public class MultiplayerActivity implements Activity {
 
   private final IsometricCamera camera;
   private final PlayerInput playerInput;
-  private final UpdateRateTimer inputRate;
+  private UpdateRateTimer sendInputRate;
 
   public MultiplayerActivity(final int clientId,
                              final int entityId,
@@ -52,17 +52,18 @@ public class MultiplayerActivity implements Activity {
     // internal state
     this.camera = new IsometricCamera();
     this.playerInput = new PlayerInput();
-    this.inputRate = UpdateRateTimer.fromFps(30.f);
+    this.sendInputRate = new UpdateRateTimer(30.f);
   }
 
   @Override
-  public boolean update(final float deltaTime) {
+  public boolean update(final float timeDelta) {
     final ClientEntity playerEntity = this.entityManager.getEntities().get(this.entityId);
     if (playerEntity != null) {
       PlayerInputController.respondToPlayerInput(playerEntity.getEntity(), this.playerInput);
     }
-    this.entityManager.updatePositions(deltaTime);
-    if (this.inputRate.shouldUpdate()) {
+    this.entityManager.updatePositions(timeDelta);
+    this.sendInputRate.setRate(this.networkManager.getSendRate());
+    if (this.sendInputRate.shouldUpdate(timeDelta)) {
       //sendPlayerInputToServer(this.playerInput);
       sendPlayerEntityToServer(playerEntity.getEntity());
     }

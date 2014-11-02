@@ -43,4 +43,8 @@ public class ClientChannel {
   public void sendPacket(final ByteBuffer data) throws IOException {
     this.channel.sendPacket(data);
   }
+
+  public Channel getChannel() {
+    return this.channel;
+  }
 }

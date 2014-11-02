@@ -1,28 +1,25 @@
 package org.fryingpanjoe.bigbattle.client;
 
-import org.lwjgl.Sys;
-
 public class FpsCounter {
 
-  private static final long UPDATE_INTERVAL = 500;
+  private static final float UPDATE_INTERVAL = 0.5f;
 
-  private long time;
+  private float time;
   private long frames;
-  private double fps;
+  private float fps;
 
   public FpsCounter() {
-    this.time = Sys.getTime();
+    this.time = 0.f;
     this.frames = 0;
-    this.fps = 0.0;
+    this.fps = 0.f;
   }
 
-  public boolean update() {
+  public boolean update(final float timeDelta) {
     ++this.frames;
-    final long now = Sys.getTime();
-    final long delta = now - this.time;
-    if (delta >= UPDATE_INTERVAL) {
-      this.fps = 1000.0 * (double) this.frames / (double) delta;
-      this.time = now;
+    this.time += timeDelta;
+    if (this.time >= UPDATE_INTERVAL) {
+      this.fps = (float) this.frames / this.time;
+      this.time = 0.f;
       this.frames = 0;
       return true;
     } else {
@@ -30,7 +27,7 @@ public class FpsCounter {
     }
   }
 
-  public double getFps() {
+  public float getFps() {
     return this.fps;
   }
 }

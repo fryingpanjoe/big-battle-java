@@ -31,6 +31,7 @@ public class Channel {
   private final DatagramChannel socket;
   private final SocketAddress address;
   private final RTT rtt;
+  private final FlowControl flowControl;
   private int ackBits;
   private int localPacketId;
   private int remotePacketId;
@@ -39,6 +40,7 @@ public class Channel {
     this.socket = socket;
     this.address = address;
     this.rtt = new RTT();
+    this.flowControl = new FlowControl();
     this.ackBits = 0;
     this.localPacketId = 0;
     this.remotePacketId = -1;
@@ -99,6 +101,10 @@ public class Channel {
 
   public RTT getRTT() {
     return this.rtt;
+  }
+
+  public FlowControl getFlowControl() {
+    return this.flowControl;
   }
 
   private Packet onPacketReceived(final int receivedPacketId,

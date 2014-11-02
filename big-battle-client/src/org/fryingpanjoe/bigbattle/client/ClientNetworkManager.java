@@ -71,4 +71,8 @@ public class ClientNetworkManager {
       }
     }
   }
+
+  public float getSendRate() {
+    return this.channel.getChannel().getFlowControl().getSendRate();
+  }
 }
